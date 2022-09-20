@@ -13,6 +13,15 @@ class LoginBot():
 
     def login(self):
 
+        # Options to maximisze windows
+        options = webdriver.ChromeOptions()
+        options.add_argument("start-maximized")
+
+        # Other options
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+
+
         browser = webdriver.Chrome('/Users/kanekisidibe/Developer/Python/RoomBookZoom/driver/chromedriver')
         browser.get(('https://accounts.google.com/ServiceLogin?'
                      'service=mail&continue=https://mail.google'
