@@ -1,4 +1,9 @@
 
+from BookBot import *
+from LoginBot import *
 
 if __name__ == '__main__':
-    print("hi")
+
+    bot = LoginBot()
+
+    bot.login()
