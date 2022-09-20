@@ -1,0 +1,3 @@
+class LoginBot():
+
+    # to complete
