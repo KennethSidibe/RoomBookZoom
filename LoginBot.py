@@ -21,11 +21,21 @@ class LoginBot():
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
 
-
         browser = webdriver.Chrome('/Users/kanekisidibe/Developer/Python/RoomBookZoom/driver/chromedriver')
         browser.get(('https://accounts.google.com/ServiceLogin?'
                      'service=mail&continue=https://mail.google'
                      '.com/mail/#identifier'))
+
+        # Selenium stealth statement
+        stealth(driver,
+                languages=["en-US", "en"],
+                vendor="Google Inc.",
+                platform="Win32",
+                webgl_vendor="Intel Inc.",
+                renderer="Intel Iris OpenGL Engine",
+                fix_hairline=True,
+                )
+
         buttonXPath = '//*[@id="identifierNext"]/div/button'
 
         usernameField = browser.find_element(By.ID, "identifierId")
