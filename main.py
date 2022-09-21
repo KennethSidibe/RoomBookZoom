@@ -6,4 +6,6 @@ if __name__ == '__main__':
 
     bot = LoginBot()
 
-    bot.login()
+    bookBot = BookBot()
+
+    bookBot.login()
