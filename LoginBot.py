@@ -42,7 +42,7 @@ class LoginBot():
 
 
         usernameField = driver.find_element(By.ID, "identifierId")
-        usernameField.send_keys(username)
+        usernameField.send_keys(mailUsername)
 
         nextButton = driver.find_element(By.XPATH, usernameNextButtonXPPath)
         nextButton.click()
@@ -53,7 +53,7 @@ class LoginBot():
         passwordField = driver.find_element(By.XPATH, pwdFieldXPath)
         pwdNextButton = driver.find_element(By.XPATH, pwdNextButtonXPath)
 
-        passwordField.send_keys(pwd)
+        passwordField.send_keys(mailPwd)
         pwdNextButton.click()
 
         sleep(3)
@@ -93,6 +93,6 @@ class LoginBot():
 
     def getOTP(self):
 
-        totp = pyotp.parse_uri(authSecretURI)
+        totp = pyotp.parse_uri(mailAuthSecretURI)
 
         return totp.now()
