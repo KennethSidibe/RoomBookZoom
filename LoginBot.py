@@ -1,3 +1,4 @@
+import pyotp
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -6,12 +7,13 @@ from webdriver_manager.chrome import ChromeDriverManager
 from credentials import *
 import undetected_chromedriver.v2 as uc
 from time import sleep
+from pyotp import TOTP
+
 
 
 class LoginBot():
 
     def login(self):
-
 
         # Options
         options = uc.ChromeOptions()
@@ -39,4 +41,15 @@ class LoginBot():
 
         nextButton.click()
 
+
+
         input(":")
+
+    def getOTP(self):
+
+        totp = pyotp.parse_uri(authSecretURI)
+
+        while 1:
+
+            sleep(1)
+            print(totp.now())
