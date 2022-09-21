@@ -103,6 +103,7 @@ class BookBot():
 
         sleep(3)
 
+        # input is just to wait and see results
         input(':')
 
     def getOTP(self):
