@@ -1,6 +1,7 @@
 
 from BookBot import *
 from LoginBot import *
+from TextBot import *
 
 if __name__ == '__main__':
 
@@ -8,4 +9,6 @@ if __name__ == '__main__':
 
     bookBot = BookBot()
 
-    bookBot.login()
+    textBot = TextBot()
+
+    textBot.analyze()
