@@ -2,7 +2,7 @@
 import numpy as np
 import pytesseract
 from pytesseract import Output
-import cv2x
+import cv2
 
 class TextBot():
 
@@ -89,6 +89,17 @@ class TextBot():
 
         cv2.waitKey()
 
+    def drawAroundBoundingBox(self, img, boundBox):
+
+        top = boundBox['y']['top']
+        left = boundBox['x']['left']
+        width = boundBox['x']['width']
+        height = boundBox['y']['height']
+
+        cv2.rectangle(img, (left, top), (left + width, top + height), (255, 255, 0), 2)
+
+        self.showImg(img)
+
     def getTimeSlot(self, img):
 
         results = pytesseract.image_to_data(img, output_type=Output.DICT)
@@ -120,10 +131,17 @@ class TextBot():
 
             if confidenceLevel >= 80:
 
-                timeSlot.append(timeAnalyzed['text'][i])
+                time = timeAnalyzed['text'][i]
+
+                boundBox = self.getTextBoundingBox(timeAnalyzed, i)
+
+                timeSlot.append((time, boundBox))
+
+        print(timeSlot[0][1])
+
+        self.drawAroundBoundingBox(processImg, timeSlot[0][1])
 
         return timeSlot
-
 
     def cropImage(self):
 
@@ -137,8 +155,18 @@ class TextBot():
 
         timeSlot = self.getTimeSlot(img)
 
-        print(timeSlot)
+    def getTextBoundingBox(self, analyzedResults, id):
 
+        boxLeft = analyzedResults['left'][id]
+        boxTop = analyzedResults['top'][id]
+        boxHeight = analyzedResults['height'][id]
+        boxWidth = analyzedResults['width'][id]
+
+        boundingBox = {'x':{'left':boxLeft, 'width':boxWidth},
+                       'y':{'top':boxTop, 'height':boxHeight}
+                       }
+
+        return boundingBox
 
     def preprocessImg(self, img):
 
