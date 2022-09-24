@@ -6,51 +6,18 @@ import cv2
 
 class TextBot():
 
-    def analyze(self):
+    def analyze(self, filePath):
 
-        testFilePath = 'testImage.jpeg'
-        screenFilePath = 'screencapture/booking_schedule_full.png'
-
-        img = cv2.imread(screenFilePath)
+        img = cv2.imread(filePath)
 
         results = pytesseract.image_to_data(img, output_type=Output.DICT)
 
-        print(results['text'])
+        cropImg = self.cropImage(img, results)
 
-        # for i in range(0, len(results['text'])):
-        #     # check confidence level
-        #
-        #     confidenceLevel = int(results['conf'][i])
-        #
-        #     if confidenceLevel >= 80:
-        #
-        #         # Get text
-        #         text = results['text'][i]
-        #
-        #         # getting coordinates of the box
-        #         x = results['left'][i]
-        #         y = results['top'][i]
-        #
-        #         # get width and height of text box
-        #         w = results['width'][i]
-        #         h = results['height'][i]
-        #
-        #         # draw box around word
-        #         cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
-        #
-        #         # add text top of the rectangle
-        #         cv2.putText(img, text,
-        #                     (x, y - 10),
-        #                     cv2.FONT_HERSHEY_SIMPLEX,
-        #                     0.5,
-        #                     (0,0, 200),
-        #                     2)
-        #
-        # cv2.imshow('text', img)
-        #
-        # cv2.setWindowProperty('text', cv2.WND_PROP_TOPMOST, 1)
-        #
-        # cv2.waitKey()
+        resultsCropImg = pytesseract.image_to_data(cropImg, output_type=Output.DICT)
+
+        timeslot = self.getTimeSlot(cropImg, resultsCropImg)
+
 
     def findIdOfDate(self, texts):
 
@@ -96,30 +63,27 @@ class TextBot():
         width = boundBox['x']['width']
         height = boundBox['y']['height']
 
-        cv2.rectangle(img, (left, top), (left + width, top + height), (255, 255, 0), 2)
+        cv2.rectangle(img, (left, top), (left + width, top + height), (0, 0, 255), 2)
 
         self.showImg(img)
 
-    def getTimeSlot(self, img):
-
-        results = pytesseract.image_to_data(img, output_type=Output.DICT)
-
-        analyzedText = results['text']
-
-        # Find the id of the text to crop the image
-        wordIdToCrop = self.findIdOfDate(analyzedText)
+    def getTimeSlot(self, img, analyzedResults):
 
         imgWidth = img.shape[1]
 
+        analyzedText = analyzedResults['text']
+
+        wordIdToCrop = self.findIdOfDate(analyzedText)
+
         pixelOffset = 15
 
-        boxLeft = results['left'][wordIdToCrop]
-        boxTop = results['top'][wordIdToCrop]
-        boxHeight = results['height'][wordIdToCrop]
+        boxLeft = analyzedResults['left'][wordIdToCrop]
+        boxTop = analyzedResults['top'][wordIdToCrop]
+        boxHeight = analyzedResults['height'][wordIdToCrop]
 
         timeSlot = []
 
-        availableTimeImg = img[boxTop - pixelOffset:boxHeight + boxTop + pixelOffset, boxLeft - pixelOffset:imgWidth]
+        availableTimeImg = img[0:boxHeight+boxTop+pixelOffset, 0:imgWidth]
 
         processImg = self.preprocessImg(availableTimeImg)
 
@@ -129,7 +93,7 @@ class TextBot():
 
             confidenceLevel = timeAnalyzed['conf'][i]
 
-            if confidenceLevel >= 80:
+            if confidenceLevel >= 60:
 
                 time = timeAnalyzed['text'][i]
 
@@ -137,23 +101,27 @@ class TextBot():
 
                 timeSlot.append((time, boundBox))
 
-        print(timeSlot[0][1])
-
-        self.drawAroundBoundingBox(processImg, timeSlot[0][1])
-
         return timeSlot
 
-    def cropImage(self):
+    def cropImage(self, img, analyzedResults):
 
-        filePath = 'screencapture/booking_schedule_full.png'
+        analyzedText = analyzedResults['text']
 
-        img = cv2.imread(filePath)
+        # Find the id of the text to crop the image
+        wordIdToCrop = self.findIdOfDate(analyzedText)
 
-        results = pytesseract.image_to_data(img, output_type=Output.DICT)
+        imgWidth = img.shape[1]
+        imgHeight = img.shape[0]
 
-        analyzedText = results['text']
+        pixelOffset = 15
 
-        timeSlot = self.getTimeSlot(img)
+        boxLeft = analyzedResults['left'][wordIdToCrop]
+        boxTop = analyzedResults['top'][wordIdToCrop]
+        boxHeight = analyzedResults['height'][wordIdToCrop]
+
+        cropImg = img[boxTop - pixelOffset:imgHeight , boxLeft-pixelOffset:imgWidth]
+
+        return cropImg
 
     def getTextBoundingBox(self, analyzedResults, id):
 
@@ -174,10 +142,10 @@ class TextBot():
 
         invert = cv2.bitwise_not(gray)
 
-        thresh = 180
+        thresh = 165
         max = 255
 
-        th, threshImg = cv2.threshold(invert, thresh, max, cv2.THRESH_BINARY)
+        th, threshImg = cv2.threshold(invert, thresh, max, cv2.THRESH_BINARY_INV)
 
         return threshImg
 
