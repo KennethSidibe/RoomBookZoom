@@ -11,9 +11,6 @@ if __name__ == '__main__':
 
     textBot = TextBot()
 
-    # textBot.analyze()
-
-    textBot.cropImage()
-
+    textBot.analyze()
 
     # bookBot.login()
