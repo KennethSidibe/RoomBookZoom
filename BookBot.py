@@ -10,9 +10,11 @@ from time import sleep
 from pyotp import TOTP
 from constant import *
 
+
 class BookBot():
 
     def login(self):
+
         # Options
         options = uc.ChromeOptions()
 
