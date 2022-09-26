@@ -68,21 +68,24 @@ class TextBot():
         # Get roomSlot for the timetable and their coordinates
         roomsSLot = self.getRoomCoordinate(cropImg, resultsCropImg)
 
-        # Get one singular roomSlot from whole screencapture
-        roomImg = self.cropRoomSlotFromImg(cropImg, roomsSLot[17][1])
+        self.getRoomAvailability('CRX-C520', timeslot, roomsSLot, cropImg)
 
-        self.showImg(roomImg)
-
-    def getRoomAvailability(self, roomName, timeSlot, roomSlot):
+    def getRoomAvailability(self, roomName, timeSlot, roomSlot, img):
 
         roomId = self.getRoomId(roomSlot, roomName)
+
+        roomBoundingBox = roomSlot[roomId][1]
+
+        roomImg = self.cropRoomSlotFromImg(img, roomBoundingBox)
+
+        self.showImg(roomImg)
 
     def getRoomId(self, roomSlot, roomName):
         # get the room id from the roomSlot Array
 
         for i in range(0, len(roomSlot)) :
 
-            if roomName == room[i]:
+            if roomName in roomSlot[i]:
                 return i
 
 
