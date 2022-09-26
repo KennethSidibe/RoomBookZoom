@@ -78,11 +78,33 @@ class TextBot():
 
         roomImg = self.cropRoomSlotFromImg(img, roomBoundingBox)
 
-        imgTimeSlot = self.addTimeSlotTextToImg(roomImg, timeSlot)
+        # imgTimeSlot = self.addTimeSlotTextToImg(roomImg, timeSlot)
 
-        imgBoundBox = self.drawBoxAroundTimeSlot(roomImg, timeSlot)
+        # imgBoundBox = self.drawBoxAroundTimeSlot(roomImg, timeSlot)
 
-        self.showImg(imgBoundBox)
+        self.getTimeSlotStatus(roomImg, '12:00', timeSlot)
+
+    def getTimeSlotStatus(self, img, timeSlotName, timeSlot):
+        # Get the status of the requested timeslot
+
+        id = self.getTimeSlotId(timeSlotName, timeSlot)
+        timeSlotBoundingBox = timeSlot[id][1]
+
+        timeSlotStatusImg = self.cropImgWithBoundingBox(img, timeSlotBoundingBox)
+
+        self.showImg(timeSlotStatusImg)
+
+    def cropImgWithCoordinates(self, img, x,y, width, height):
+
+        cropImg = img[y:y+height, x:x+width]
+
+    def getTimeSlotId(self, timeSlotName, timeSlot):
+        # Get the id of the timeslot requested
+
+        for i in range(0, len(timeSlot)):
+
+            if timeSlot[i][0] == timeSlotName:
+                return i
 
     def addTimeSlotTextToImg(self, img, timeSlot):
 
@@ -252,6 +274,18 @@ class TextBot():
         pixelOffset = 20
 
         cropImg = img[top-pixelOffset:top+height+pixelOffset, 0:imgWidth]
+
+        return cropImg
+
+    def cropImgWithBoundingBox(self, img, boundingBox):
+
+        # Crop room slot from img with the provided bounding box
+        top = boundingBox['y']['top']
+        height = boundingBox['y']['height']
+        left = boundingBox['x']['left']
+        width = boundingBox['x']['width']
+
+        cropImg = img[top:top + height, left: left + width]
 
         return cropImg
 
