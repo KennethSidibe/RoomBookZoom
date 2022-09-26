@@ -80,7 +80,9 @@ class TextBot():
 
         imgTimeSlot = self.addTimeSlotTextToImg(roomImg, timeSlot)
 
-        self.showImg(imgTimeSlot)
+        imgBoundBox = self.drawBoxAroundTimeSlot(roomImg, timeSlot)
+
+        self.showImg(imgBoundBox)
 
     def addTimeSlotTextToImg(self, img, timeSlot):
 
@@ -102,7 +104,24 @@ class TextBot():
                               fontScale, color,
                               thickness, cv2.LINE_AA)
 
-        self.showImg(imgWithTimeSlot)
+        return imgWithTimeSlot
+
+    def drawBoxAroundTimeSlot(self, img, timeSlot):
+
+        for i in range(0, len(timeSlot)):
+
+            left = timeSlot[i][1]['x']['left']
+            top = timeSlot[i][1]['y']['top']
+            width = timeSlot[i][1]['x']['width']
+            height = timeSlot[i][1]['y']['height']
+
+            imgWithBoundingBox = cv2.rectangle(img,
+                                               (left, top),
+                                               (left + width, top + height),
+                                               (0, 0, 255),
+                                               2)
+
+        return imgWithBoundingBox
 
     def getRoomId(self, roomSlot, roomName):
         # get the room id from the roomSlot Array
