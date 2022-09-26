@@ -78,7 +78,31 @@ class TextBot():
 
         roomImg = self.cropRoomSlotFromImg(img, roomBoundingBox)
 
-        self.showImg(roomImg)
+        imgTimeSlot = self.addTimeSlotTextToImg(roomImg, timeSlot)
+
+        self.showImg(imgTimeSlot)
+
+    def addTimeSlotTextToImg(self, img, timeSlot):
+
+        pixelOffset = 10
+
+        for i in range(0, len(timeSlot)):
+
+            text = timeSlot[i][0]
+
+            orgX = timeSlot[i][1]['x']['left']
+            orgY = timeSlot[i][1]['y']['top'] + pixelOffset
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            org = (orgX, orgY)
+            fontScale = 1
+            color = (255, 0, 0)
+            thickness = 2
+            imgWithTimeSlot = cv2.putText(img, text, org, font,
+                              fontScale, color,
+                              thickness, cv2.LINE_AA)
+
+        self.showImg(imgWithTimeSlot)
 
     def getRoomId(self, roomSlot, roomName):
         # get the room id from the roomSlot Array
@@ -87,7 +111,6 @@ class TextBot():
 
             if roomName in roomSlot[i]:
                 return i
-
 
     def getRoomCoordinate(self, img, analyzedResults):
         # Get the coordinates of all the rooms in the present screenCapture
