@@ -13,9 +13,9 @@ class TextBot():
             return False
 
         rooms = {
-                'CRX' : ['CRX-520', 'CRX-521', 'CRX-522', 'CRX-523', 'CRX-524',
-                         'CRX-525', 'CRX-526', 'CRX-527', 'CRX-528','CRX-529',
-                         'CRX-541', 'CRX-542', 'CRX-543', 'CRX-544', 'CRX-545'],
+                'CRX' : ['CRX-C520', 'CRX-C521', 'CRX-C522', 'CRX-C523', 'CRX-C524',
+                         'CRX-C525', 'CRX-C526', 'CRX-C527', 'CRX-C528','CRX-C529',
+                         'CRX-C541', 'CRX-C542', 'CRX-C543', 'CRX-C544', 'CRX-C545'],
 
                  'FTX' : ['FTX-514', 'FTX-515', 'FTX-525A', 'FTX-525B',
                   'FTX-525C', 'FTX-525D', 'FTX-525G', 'FTX-525H', 'FTX-525J'],
@@ -60,16 +60,34 @@ class TextBot():
         # Analyze the cropped img to get only the timeslots
         resultsCropImg = pytesseract.image_to_data(cropImg, output_type=Output.DICT)
 
-        print(resultsCropImg['text'])
-
         timeslot = self.getTimeSlot(cropImg, resultsCropImg)
+
+        roomsSLot = self.getRoomCoordinate(cropImg, resultsCropImg)
+
+        print(roomsSLot)
 
         cropImgHeight = cropImg.shape[0]
 
         self.showImg(cropImg)
 
-    def getRoomCoordinate(self, ):
-        print('hi')
+    def getRoomCoordinate(self, img, analyzedResults):
+
+        roomsSlot = []
+
+        for i in range(0, len(analyzedResults['text'])):
+
+            if analyzedResults['conf'][i] >= 60:
+
+                text = analyzedResults['text'][i]
+
+                if self.isStringARoom(text):
+
+                    boundingBox = self.getTextBoundingBox(analyzedResults, i)
+                    slot = [text, boundingBox]
+
+                    roomsSlot.append(slot)
+
+        return  roomsSlot
 
     def findIdOfDate(self, texts):
 
@@ -154,6 +172,9 @@ class TextBot():
                 timeSlot.append((time, boundBox))
 
         return timeSlot
+
+    def cropRoomSlotFromImg(self, img, analyzedResults):
+
 
     def cropImage(self, img, analyzedResults):
 
