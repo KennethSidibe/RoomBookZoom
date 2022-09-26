@@ -6,23 +6,75 @@ import cv2
 
 class TextBot():
 
+
+    def isStringARoom(self, string):
+
+        if len(string) > 10 or len(string) < 7:
+            return False
+
+        rooms = {
+                'CRX' : ['CRX-520', 'CRX-521', 'CRX-522', 'CRX-523', 'CRX-524',
+                         'CRX-525', 'CRX-526', 'CRX-527', 'CRX-528','CRX-529',
+                         'CRX-541', 'CRX-542', 'CRX-543', 'CRX-544', 'CRX-545'],
+
+                 'FTX' : ['FTX-514', 'FTX-515', 'FTX-525A', 'FTX-525B',
+                  'FTX-525C', 'FTX-525D', 'FTX-525G', 'FTX-525H', 'FTX-525J'],
+
+                 'MRT' : ['MRT-404', 'MRT-405', 'MRT-406', 'MRT-407', 'MRT-408', 'MRT-409',
+                          'MRT-410', 'MRT-411', 'MRT-412','MRT-415', 'MRT-417', 'MRT-418'],
+
+                 'RGN' : ['RGN-1020J', 'RGN-1020K', 'RGN-1020L',
+                          'RGN-1020M', 'RGN-1020N', 'RGN-1020P']
+                 }
+
+        chars = []
+        Buildings = rooms.keys()
+
+        for i in range(0, 3):
+            chars.append(string[i])
+
+        charFromString = ''.join(chars)
+
+        if not (charFromString in rooms):
+            return False
+
+        roomsForBuilding = rooms[charFromString]
+
+        if string in roomsForBuilding:
+            return True
+
+        else:
+            return False
+
     def analyze(self, filePath):
 
+        # Loading the screencapture
         img = cv2.imread(filePath)
 
+        # Analyse the screencapture to find the timeTable coordinate
         results = pytesseract.image_to_data(img, output_type=Output.DICT)
 
+        # crop the img to get only the calendar
         cropImg = self.cropImage(img, results)
 
+        # Analyze the cropped img to get only the timeslots
         resultsCropImg = pytesseract.image_to_data(cropImg, output_type=Output.DICT)
+
+        print(resultsCropImg['text'])
 
         timeslot = self.getTimeSlot(cropImg, resultsCropImg)
 
+        cropImgHeight = cropImg.shape[0]
+
+        self.showImg(cropImg)
+
+    def getRoomCoordinate(self, ):
+        print('hi')
 
     def findIdOfDate(self, texts):
 
-        # This id will be used to crop our the schedule screen capture image
 
+        # This id will be used to crop our the schedule screen capture image
         id = 0
 
         for i in range(0, len(texts)):
