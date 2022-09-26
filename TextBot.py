@@ -60,15 +60,14 @@ class TextBot():
         # Analyze the cropped img to get only the timeslots
         resultsCropImg = pytesseract.image_to_data(cropImg, output_type=Output.DICT)
 
+
         timeslot = self.getTimeSlot(cropImg, resultsCropImg)
 
         roomsSLot = self.getRoomCoordinate(cropImg, resultsCropImg)
 
-        print(roomsSLot)
+        roomImg = self.cropRoomSlotFromImg(cropImg, roomsSLot[17][1])
 
-        cropImgHeight = cropImg.shape[0]
-
-        self.showImg(cropImg)
+        self.showImg(roomImg)
 
     def getRoomCoordinate(self, img, analyzedResults):
 
@@ -173,9 +172,16 @@ class TextBot():
 
         return timeSlot
 
-    def cropRoomSlotFromImg(self, img, analyzedResults):
+    def cropRoomSlotFromImg(self, img, boundingBox):
 
+        imgWidth = img.shape[1]
+        top = boundingBox['y']['top']
+        height = boundingBox['y']['height']
+        pixelOffset = 20
 
+        cropImg = img[top-pixelOffset:top+height+pixelOffset, 0:imgWidth]
+
+        return cropImg
     def cropImage(self, img, analyzedResults):
 
         analyzedText = analyzedResults['text']
