@@ -8,6 +8,8 @@ class TextBot():
 
 
     def isStringARoom(self, string):
+        # check if provided string is a reservable room by the system
+        # Like FTX-514
 
         if len(string) > 10 or len(string) < 7:
             return False
@@ -72,6 +74,7 @@ class TextBot():
         self.showImg(roomImg)
 
     def getRoomCoordinate(self, img, analyzedResults):
+        # Get the coordinates of all the rooms in the present screenCapture
 
         roomsSlot = []
 
@@ -91,7 +94,7 @@ class TextBot():
         return  roomsSlot
 
     def findIdOfDate(self, texts):
-
+        # Find the id of the date in the analyzedResults dict
 
         # This id will be used to crop our the schedule screen capture image
         id = 0
@@ -109,6 +112,7 @@ class TextBot():
         return id
 
     def drawBoxAroundText(self, id, analyzedResults, img):
+        # Draw a box around the text in the current image with the id provided
 
         # getting coordinates of the box
         x = analyzedResults['left'][id]
@@ -128,6 +132,7 @@ class TextBot():
         cv2.waitKey()
 
     def drawAroundBoundingBox(self, img, boundBox):
+        # Draw a box with the provided bounding box
 
         top = boundBox['y']['top']
         left = boundBox['x']['left']
@@ -139,6 +144,7 @@ class TextBot():
         self.showImg(img)
 
     def getTimeSlot(self, img, analyzedResults):
+        # Get the timeSlot from the current screencapture with their exact coordinates
 
         imgWidth = img.shape[1]
 
@@ -156,7 +162,7 @@ class TextBot():
 
         availableTimeImg = img[0:boxHeight+boxTop+pixelOffset, 0:imgWidth]
 
-        processImg = self.preprocessImg(availableTimeImg)
+        processImg = self.preprocessTimeSlotImg(availableTimeImg)
 
         timeAnalyzed = pytesseract.image_to_data(processImg, output_type=Output.DICT)
 
@@ -175,6 +181,7 @@ class TextBot():
         return timeSlot
 
     def cropRoomSlotFromImg(self, img, boundingBox):
+        # Crop room slot from img with the provided bounding box
 
         imgWidth = img.shape[1]
         top = boundingBox['y']['top']
@@ -184,7 +191,9 @@ class TextBot():
         cropImg = img[top-pixelOffset:top+height+pixelOffset, 0:imgWidth]
 
         return cropImg
+
     def cropImage(self, img, analyzedResults):
+        # Crop the calendar from the screencapture
 
         analyzedText = analyzedResults['text']
 
@@ -205,6 +214,7 @@ class TextBot():
         return cropImg
 
     def getTextBoundingBox(self, analyzedResults, id):
+        # Get bounding box of text with the provided id
 
         boxLeft = analyzedResults['left'][id]
         boxTop = analyzedResults['top'][id]
@@ -217,7 +227,8 @@ class TextBot():
 
         return boundingBox
 
-    def preprocessImg(self, img):
+    def preprocessTimeSlotImg(self, img):
+        # Preprocess img to upgrade text analysis result for current img timeslot
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -231,6 +242,7 @@ class TextBot():
         return threshImg
 
     def showImg(self, img):
+        # Show image with wait statement
 
         cv2.imshow('window', img)
 
@@ -239,6 +251,8 @@ class TextBot():
         cv2.waitKey()
 
     def isWeekday(self, string):
+
+        # check if string is a weekday works with english and french
 
         weekDayEng = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
         weekDayFr = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
