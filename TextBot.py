@@ -60,11 +60,13 @@ class TextBot():
         # Analyze the cropped img to get only the timeslots
         resultsCropImg = pytesseract.image_to_data(cropImg, output_type=Output.DICT)
 
-
+        # Get timeslot for the timetable and their coordinates on the screencapture
         timeslot = self.getTimeSlot(cropImg, resultsCropImg)
 
+        # Get roomSlot for the timetable and their coordinates
         roomsSLot = self.getRoomCoordinate(cropImg, resultsCropImg)
 
+        # Get one singulard roomSlot from whole screencapture
         roomImg = self.cropRoomSlotFromImg(cropImg, roomsSLot[17][1])
 
         self.showImg(roomImg)
