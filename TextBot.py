@@ -1,4 +1,4 @@
-
+from constant import *
 import numpy as np
 import pytesseract
 from pytesseract import Output
@@ -68,7 +68,7 @@ class TextBot():
         # Get roomSlot for the timetable and their coordinates
         roomsSLot = self.getRoomCoordinate(cropImg, resultsCropImg)
 
-        self.getRoomAvailability('CRX-C520', timeslot, roomsSLot, cropImg)
+        self.getRoomAvailability('CRX-C526', timeslot, roomsSLot, cropImg)
 
     def getRoomAvailability(self, roomName, timeSlot, roomSlot, img):
 
@@ -233,10 +233,15 @@ class TextBot():
                 time = timeAnalyzed['text'][i]
 
                 boundBox = self.getTextBoundingBox(timeAnalyzed, i)
+                self.addWidthOffsetToBoundingBox(boundBox)
 
                 timeSlot.append((time, boundBox))
 
         return timeSlot
+
+    def addWidthOffsetToBoundingBox(self, boundBox):
+
+        boundBox['x']['width'] += boundBoxPixelOffset
 
     def cropRoomSlotFromImg(self, img, boundingBox):
         # Crop room slot from img with the provided bounding box
