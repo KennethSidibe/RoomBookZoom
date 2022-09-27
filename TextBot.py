@@ -77,11 +77,14 @@ class TextBot():
         # this function generate timeslot and roomSlot
         self.prepareRoomAnalysis()
 
-        roomsAvailability = self.getRoomAvailability("CRX-C520")
+        # Get the rooms availability
+        roomsAvailability = self.getAllRoomsAvailability()
+        self.setRoomsAvailability(roomsAvailability)
 
-        print(roomsAvailability)
+        # get the image with the availability Text for test checking
+        availabilityImg = self.visualizeRoomsAvailability()
 
-        # return roomsAvailability
+        return roomsAvailability
 
     def prepareRoomAnalysis(self):
         # Generate all the required attributes for the functioning of getRoomAvailability Method
@@ -146,6 +149,77 @@ class TextBot():
                 roomName.append(text)
 
         return roomName
+
+    def visualizeRoomsAvailability(self):
+        # To visualize the result of the execution
+
+        availabilityImg = np.array([])
+
+        for room in self.roomsName:
+
+            availabilityImg = self.addAvailabilityTextToRoomSlotImg(room, availabilityImg)
+
+        return availabilityImg
+
+    def addAvailabilityTextToRoomSlotImg(self, roomName, roomImg=None):
+        # Add availability text to provided roomName
+
+        if roomImg.size == 0:
+            availabilityTextImg = self.calendarImg.copy()
+
+        else:
+            availabilityTextImg = roomImg
+
+        roomId = self.getRoomId(roomName)
+
+        roomYCoordinate = self.getRoomYCoord(roomName, roomId)
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        fontScale = 1
+        color = (255, 0, 0)
+        thickness = 2
+        pixelOffset = 10
+
+        for i in range(0, len(self.timeSlot)):
+
+            slot = self.timeSlot[i][0]
+            availability = self.roomsAvailability[roomName][slot]
+
+            left = self.timeSlot[i][1]['x']['left']
+
+            org = (left, roomYCoordinate + pixelOffset)
+
+            text = self.setTextToAdd(availability)
+
+            availabilityTextImg = cv2.putText(availabilityTextImg, text, org, font,
+                              fontScale, color,
+                              thickness, cv2.LINE_AA)
+
+        return availabilityTextImg
+
+    def setTextToAdd(self, availabilityIndicator):
+        # Returns the text to add respective to the indicator
+
+        if availabilityIndicator == FULLY_BOOK_INDICATOR:
+            return 'FULL'
+        elif availabilityIndicator == FULLY_RESERVABLE_INDICATOR:
+            return 'FREE'
+        elif availabilityIndicator == FIRST_HALF_INDICATOR:
+            return 'FFREE'
+        elif availabilityIndicator == SECOND_HALF_INDICATOR:
+            return 'SFREE'
+        else:
+            return 'UND'
+
+    def getRoomYCoord(self, roomName, roomId=None):
+        # Returns the room y coordinate
+
+        if roomId == None:
+            roomId = self.getRoomId(roomName)
+
+        roomTop = self.roomSlot[roomId][1]['y']['top']
+
+        return roomTop
 
     def getAllRoomsAvailability(self):
 
@@ -340,6 +414,11 @@ class TextBot():
 
         pixelOffset = 10
 
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        fontScale = 1
+        color = (255, 0, 0)
+        thickness = 2
+
         for i in range(0, len(self.timeSlot)):
 
             text = timeSlot[i][0]
@@ -347,11 +426,8 @@ class TextBot():
             orgX = timeSlot[i][1]['x']['left']
             orgY = timeSlot[i][1]['y']['top'] + pixelOffset
 
-            font = cv2.FONT_HERSHEY_SIMPLEX
             org = (orgX, orgY)
-            fontScale = 1
-            color = (255, 0, 0)
-            thickness = 2
+
             imgWithTimeSlot = cv2.putText(img, text, org, font,
                               fontScale, color,
                               thickness, cv2.LINE_AA)
@@ -642,6 +718,9 @@ class TextBot():
 
     def setRoomSlot(self, roomSlot):
         self.roomSlot = roomSlot
+
+    def setRoomsAvailability(self, roomsAvailability):
+        self.roomsAvailability = roomsAvailability
 
     # GETTERS
 
