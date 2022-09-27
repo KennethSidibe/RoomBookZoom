@@ -84,6 +84,8 @@ class TextBot():
         # get the image with the availability Text for test checking
         availabilityImg = self.visualizeRoomsAvailability()
 
+        self.showImg(availabilityImg)
+
         return roomsAvailability
 
     def prepareRoomAnalysis(self):
@@ -93,9 +95,6 @@ class TextBot():
 
             if not ( self.calendarImg.size == 0 or bool(self.calendarAnalysis) == False ):
 
-                # Get all the roomsName
-                roomsName = self.generateRoomsName()
-                self.setRoomsName(roomsName)
 
                 # Get timeslot for the timetable and their coordinates on the screencapture
                 timeSlot = self.getTimeSlot()
@@ -108,6 +107,10 @@ class TextBot():
                 # Get the roomName Image Analysis
                 roomNameAnalysis = pytesseract.image_to_data(self.roomNameImg, output_type=Output.DICT)
                 self.setRoomNameAnalysis(roomNameAnalysis)
+
+                # Get all the roomsName
+                roomsName = self.generateRoomsName()
+                self.setRoomsName(roomsName)
 
                 # Get the roomSlotCoordinate data
                 roomSlot = self.generateRoomSlot()
@@ -136,8 +139,6 @@ class TextBot():
         return roomAvailability
 
     def generateRoomsName(self):
-
-        roomNameImg = self.cropRoomName(self.calendarImg, self.calendarAnalysis)
 
         roomName = []
 
@@ -456,7 +457,8 @@ class TextBot():
 
         for i in range(0, len(self.roomSlot)) :
 
-            if roomName in self.roomSlot[i]:
+            if roomName == self.roomSlot[i][0]:
+
                 return i
 
     def cropRoomName(self, img, analyzedResults):
@@ -482,18 +484,16 @@ class TextBot():
         # Get the coordinates of all the rooms in the present screenCapture
         roomsSlot = []
 
-        roomNameImg = self.cropRoomName(self.calendarImg, self.calendarAnalysis)
-        self.setRoomNameImg(roomNameImg)
 
-        for i in range(0, len(self.calendarAnalysis['text'])):
+        for i in range(0, len(self.roomNameAnalysis['text'])):
 
-            if self.calendarAnalysis['conf'][i] >= 60:
+            if self.roomNameAnalysis['conf'][i] >= 30:
 
-                text = self.calendarAnalysis['text'][i]
+                text = self.roomNameAnalysis['text'][i]
 
                 if self.isStringARoom(text):
 
-                    boundingBox = self.getTextBoundingBox(self.calendarAnalysis, i)
+                    boundingBox = self.getTextBoundingBox(self.roomNameAnalysis, i)
                     slot = [text, boundingBox]
 
                     roomsSlot.append(slot)
