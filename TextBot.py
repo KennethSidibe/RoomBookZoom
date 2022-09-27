@@ -59,13 +59,15 @@ class TextBot():
         # crop the img to get only the calendar
         calendarImg = self.cropImage(img, results)
 
-        roomsName = self.getRoomsName(calendarImg)
+        calendarAnalysis = pytesseract.image_to_data(calendarImg, output_type=Output.DICT)
+
+        roomsName = self.getRoomsName(calendarImg, calendarAnalysis)
 
         # roomsAvailability = self.getRoomAvailability("CRX-C520", calendarImg)
 
-        roomsAvailability = self.getAllRoomsAvailability(roomsName, calendarImg)
+        # roomsAvailability = self.getAllRoomsAvailability(roomsName, calendarImg)
 
-        return roomsAvailability
+        # return roomsAvailability
 
     def getRoomAvailability(self, roomName, img):
 
@@ -86,9 +88,7 @@ class TextBot():
 
         return roomAvailability
 
-    def getRoomsName(self, img):
-
-        analyzedResults = pytesseract.image_to_data(img, output_type=Output.DICT)
+    def getRoomsName(self, img, analyzedResults):
 
         roomNameImg = self.cropRoomName(img, analyzedResults)
 
