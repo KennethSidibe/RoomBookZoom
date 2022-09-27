@@ -57,24 +57,31 @@ class TextBot():
         results = pytesseract.image_to_data(img, output_type=Output.DICT)
 
         # crop the img to get only the calendar
-        cropImg = self.cropImage(img, results)
+        calendarImg = self.cropImage(img, results)
+
+        roomAvailability = self.getRoomAvailability('CRX_C523', calendarImg)
+
+        print(roomAvailability)
+
+    def getRoomAvailability(self, roomName, img):
 
         # Analyze the cropped img to get only the timeslots
-        resultsCropImg = pytesseract.image_to_data(cropImg, output_type=Output.DICT)
+        resultsCalendarImg = pytesseract.image_to_data(img, output_type=Output.DICT)
 
         # Get timeslot for the timetable and their coordinates on the screencapture
-        timeslot = self.getTimeSlot(cropImg, resultsCropImg)
+        timeslot = self.getTimeSlot(img, resultsCalendarImg)
 
         # Get roomsSlot for the timetable and their coordinates
-        roomNameImg = self.cropRoomName(cropImg, resultsCropImg)
+        roomNameImg = self.cropRoomName(img, resultsCalendarImg)
 
-        resultsCropName = pytesseract.image_to_data(roomNameImg, output_type=Output.DICT)
+        resultsRoomNameImg = pytesseract.image_to_data(roomNameImg, output_type=Output.DICT)
 
-        self.showImg(roomNameImg)
+        roomsSLot = self.getRoomCoordinate(roomNameImg, resultsRoomNameImg)
 
-        roomsSLot = self.getRoomCoordinate(roomNameImg, resultsCropName)
+        roomAvailability = self.getRoomAvailabilityWithSlot('CRX-C523', timeslot, roomsSLot, img)
 
-        roomAvailability = self.getRoomAvailability('CRX-C523', timeslot, roomsSLot, cropImg)
+        return roomAvailability
+
 
     def findIdOfDateWithYear(self, texts):
         id = 0
@@ -90,7 +97,7 @@ class TextBot():
 
         return id
 
-    def getRoomAvailability(self, roomName, timeSlot, roomSlot, img):
+    def getRoomAvailabilityWithSlot(self, roomName, timeSlot, roomSlot, img):
 
         roomId = self.getRoomId(roomSlot, roomName)
 
@@ -107,8 +114,6 @@ class TextBot():
             status = self.getTimeSlotStatus(roomImg, timeSlotName, timeSlot)
 
             timeSlotStatus[timeSlotName] = status
-
-        print(timeSlotStatus)
 
         roomImg = self.addTimeSlotTextToImg(roomImg, timeSlot)
 
