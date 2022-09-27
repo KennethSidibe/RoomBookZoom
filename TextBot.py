@@ -7,6 +7,35 @@ import math
 
 class TextBot():
 
+    calendarImg = None
+    calendarAnalysis = None
+    roomNameImg = None
+    roomNameAnalysis = None
+    roomsName = None
+    roomSlot = None
+    timeSlot = None
+
+    def setCalendarImg(self, calendarImg):
+        self.calendarImg = calendarImg
+
+    def setRoomNameImg(self, roomNameImg):
+        self.roomNameImg = roomNameImg
+
+    def setCalendarAnalysis(self, analysisDict):
+        self.calendarAnalysis = analysisDict
+
+    def setRoomNameAnalysis(self, roomNameAnalysis):
+        self.roomNameAnalysis = roomNameAnalysis
+
+    def setRoomsName(self, rooms):
+        self.roomsName = rooms
+
+    def setTimeSlot(self, timeSlot):
+        self.timeSlot = timeSlot
+
+    def setRoomSlot(self, roomSlot):
+        self.roomSlot = roomSlot
+
     def isStringARoom(self, string):
         # check if provided string is a reservable room by the system
         # Like FTX-514
@@ -57,34 +86,35 @@ class TextBot():
         results = pytesseract.image_to_data(img, output_type=Output.DICT)
 
         # crop the img to get only the calendar
-        calendarImg = self.cropImage(img, results)
+        # calendarImg = self.cropImage(img, results)
 
-        calendarAnalysis = pytesseract.image_to_data(calendarImg, output_type=Output.DICT)
+        self.setCalendarImg( self.cropCalendarImage(img, results) )
 
-        roomsName = self.getRoomsName(calendarImg, calendarAnalysis)
+        self.setCalendarAnalysis( pytesseract.image_to_data(self.calendarImg, output_type=Output.DICT) )
 
-        # roomsAvailability = self.getRoomAvailability("CRX-C520", calendarImg)
+        self.setRoomsName( self.getRoomsName(self.calendarImg, self.calendarAnalysis) )
+
+        roomsAvailability = self.getRoomAvailability("CRX-C520")
+
+        print(roomsAvailability)
 
         # roomsAvailability = self.getAllRoomsAvailability(roomsName, calendarImg)
 
         # return roomsAvailability
 
-    def getRoomAvailability(self, roomName, img):
-
-        # Analyze the cropped img to get only the timeslots
-        resultsCalendarImg = pytesseract.image_to_data(img, output_type=Output.DICT)
+    def getRoomAvailability(self, roomName):
 
         # Get timeslot for the timetable and their coordinates on the screencapture
-        timeslot = self.getTimeSlot(img, resultsCalendarImg)
+        self.timeSlot = self.getTimeSlot(self.calendarImg, self.calendarAnalysis)
 
         # Get roomsSlot for the timetable and their coordinates
-        roomNameImg = self.cropRoomName(img, resultsCalendarImg)
+        self.roomNameImg = self.cropRoomName(self.calendarImg, self.calendarAnalysis)
 
-        resultsRoomNameImg = pytesseract.image_to_data(roomNameImg, output_type=Output.DICT)
+        self.roomNameAnalysis = pytesseract.image_to_data(self.roomNameImg, output_type=Output.DICT)
 
-        roomsSLot = self.getRoomCoordinate(roomNameImg, resultsRoomNameImg)
+        self.roomSlot = self.getRoomCoordinate(self.roomNameImg, self.roomNameAnalysis)
 
-        roomAvailability = self.getRoomAvailabilityWithSlot('CRX-C523', timeslot, roomsSLot, img)
+        roomAvailability = self.getRoomAvailabilityWithSlot('CRX-C523', self.timeSlot, self.roomSlot)
 
         return roomAvailability
 
@@ -130,13 +160,13 @@ class TextBot():
 
         return id
 
-    def getRoomAvailabilityWithSlot(self, roomName, timeSlot, roomSlot, img):
+    def getRoomAvailabilityWithSlot(self, roomName, timeSlot, roomSlot):
 
-        roomId = self.getRoomId(roomSlot, roomName)
+        roomId = self.getRoomId(self.roomSlot, roomName)
 
-        roomBoundingBox = roomSlot[roomId][1]
+        roomBoundingBox = self.roomSlot[roomId][1]
 
-        roomImg = self.cropRoomSlotFromImg(img, roomBoundingBox)
+        roomImg = self.cropRoomSlotFromImg(self.calendarImg, roomBoundingBox)
 
         # copyRoomImg = roomImg.copy()
 
@@ -147,11 +177,11 @@ class TextBot():
 
         timeSlotStatus = {}
 
-        for i in range (0, len(timeSlot)):
+        for i in range (0, len(self.timeSlot)):
 
-            timeSlotName = timeSlot[i][0]
+            timeSlotName = self.timeSlot[i][0]
 
-            status = self.getTimeSlotStatus(roomImg, timeSlotName, timeSlot)
+            status = self.getTimeSlotStatus(roomImg, timeSlotName, self.timeSlot)
 
             timeSlotStatus[timeSlotName] = status
 
@@ -160,8 +190,8 @@ class TextBot():
     def getTimeSlotStatus(self, img, timeSlotName, timeSlot):
         # Get the status of the requested timeslot
 
-        id = self.getTimeSlotId(timeSlotName, timeSlot)
-        timeSlotBoundingBox = timeSlot[id][1]
+        id = self.getTimeSlotId(timeSlotName, self.timeSlot)
+        timeSlotBoundingBox = self.timeSlot[id][1]
 
         timeSlotStatusImg = self.cropImgWithBoundingBox(img, timeSlotBoundingBox)
 
@@ -287,7 +317,7 @@ class TextBot():
     def getTimeSlotId(self, timeSlotName, timeSlot):
         # Get the id of the timeslot requested
 
-        for i in range(0, len(timeSlot)):
+        for i in range(0, len(self.timeSlot)):
 
             if timeSlot[i][0] == timeSlotName:
                 return i
@@ -296,7 +326,7 @@ class TextBot():
 
         pixelOffset = 10
 
-        for i in range(0, len(timeSlot)):
+        for i in range(0, len(self.timeSlot)):
 
             text = timeSlot[i][0]
 
@@ -316,7 +346,7 @@ class TextBot():
 
     def drawBoxAroundTimeSlot(self, img, timeSlot):
 
-        for i in range(0, len(timeSlot)):
+        for i in range(0, len(self.timeSlot)):
 
             left = timeSlot[i][1]['x']['left']
             top = timeSlot[i][1]['y']['top']
@@ -334,9 +364,9 @@ class TextBot():
     def getRoomId(self, roomSlot, roomName):
         # get the room id from the roomSlot Array
 
-        for i in range(0, len(roomSlot)) :
+        for i in range(0, len(self.roomSlot)) :
 
-            if roomName in roomSlot[i]:
+            if roomName in self.roomSlot[i]:
                 return i
 
     def cropRoomName(self, img, analyzedResults):
@@ -362,17 +392,17 @@ class TextBot():
 
         roomsSlot = []
 
-        self.cropRoomName(img, analyzedResults)
+        self.cropRoomName(self.calendarImg, self.calendarAnalysis)
 
-        for i in range(0, len(analyzedResults['text'])):
+        for i in range(0, len(self.calendarAnalysis['text'])):
 
-            if analyzedResults['conf'][i] >= 60:
+            if self.calendarAnalysis['conf'][i] >= 60:
 
-                text = analyzedResults['text'][i]
+                text = self.calendarAnalysis['text'][i]
 
                 if self.isStringARoom(text):
 
-                    boundingBox = self.getTextBoundingBox(analyzedResults, i)
+                    boundingBox = self.getTextBoundingBox(self.calendarAnalysis, i)
                     slot = [text, boundingBox]
 
                     roomsSlot.append(slot)
@@ -430,21 +460,21 @@ class TextBot():
     def getTimeSlot(self, img, analyzedResults):
         # Get the timeSlot from the current screencapture with their exact coordinates
 
-        imgWidth = img.shape[1]
+        imgWidth = self.calendarImg.shape[1]
 
-        analyzedText = analyzedResults['text']
+        analyzedText = self.calendarAnalysis['text']
 
         wordIdToCrop = self.findIdOfDate(analyzedText)
 
         pixelOffset = 15
 
-        boxLeft = analyzedResults['left'][wordIdToCrop]
-        boxTop = analyzedResults['top'][wordIdToCrop]
-        boxHeight = analyzedResults['height'][wordIdToCrop]
+        boxLeft = self.calendarAnalysis['left'][wordIdToCrop]
+        boxTop = self.calendarAnalysis['top'][wordIdToCrop]
+        boxHeight = self.calendarAnalysis['height'][wordIdToCrop]
 
         timeSlot = []
 
-        availableTimeImg = img[0:boxHeight+boxTop+pixelOffset, 0:imgWidth]
+        availableTimeImg = self.calendarImg[0:boxHeight+boxTop+pixelOffset, 0:imgWidth]
 
         processImg = self.preprocessTimeSlotImg(availableTimeImg)
 
@@ -493,7 +523,7 @@ class TextBot():
 
         return cropImg
 
-    def cropImage(self, img, analyzedResults):
+    def cropCalendarImage(self, img, analyzedResults):
         # Crop the calendar from the screencapture
 
         analyzedText = analyzedResults['text']
