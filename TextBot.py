@@ -59,9 +59,13 @@ class TextBot():
         # crop the img to get only the calendar
         calendarImg = self.cropImage(img, results)
 
-        roomAvailability = self.getRoomAvailability('CRX_C523', calendarImg)
+        roomsName = self.getRoomsName(calendarImg)
 
-        print(roomAvailability)
+        # roomsAvailability = self.getRoomAvailability("CRX-C520", calendarImg)
+
+        roomsAvailability = self.getAllRoomsAvailability(roomsName, calendarImg)
+
+        return roomsAvailability
 
     def getRoomAvailability(self, roomName, img):
 
@@ -82,6 +86,35 @@ class TextBot():
 
         return roomAvailability
 
+    def getRoomsName(self, img):
+
+        analyzedResults = pytesseract.image_to_data(img, output_type=Output.DICT)
+
+        roomNameImg = self.cropRoomName(img, analyzedResults)
+
+        roomName = []
+
+        for i in range(0, len(analyzedResults['text'])):
+
+            text = analyzedResults['text'][i]
+
+            if self.isStringARoom(text):
+                roomName.append(text)
+
+        return roomName
+
+    def getAllRoomsAvailability(self, roomsName, img):
+
+        roomsAvailability = {}
+
+        for room in roomsName:
+
+            availability = self.getRoomAvailability(room, img)
+
+            roomsAvailability[room] = availability
+
+
+        return roomsAvailability
 
     def findIdOfDateWithYear(self, texts):
         id = 0
@@ -105,6 +138,13 @@ class TextBot():
 
         roomImg = self.cropRoomSlotFromImg(img, roomBoundingBox)
 
+        # copyRoomImg = roomImg.copy()
+
+        # textRoomImg = self.addTimeSlotTextToImg(copyRoomImg, timeSlot)
+        # self.showImg(textRoomImg)
+
+        # slotWithText = self.addTimeSlotTextToImg(roomImg, timeSlot)
+
         timeSlotStatus = {}
 
         for i in range (0, len(timeSlot)):
@@ -114,10 +154,6 @@ class TextBot():
             status = self.getTimeSlotStatus(roomImg, timeSlotName, timeSlot)
 
             timeSlotStatus[timeSlotName] = status
-
-        roomImg = self.addTimeSlotTextToImg(roomImg, timeSlot)
-
-        self.showImg(roomImg)
 
         return timeSlotStatus
 
@@ -222,20 +258,21 @@ class TextBot():
                 elif h < 10:
                     pixelCount['red'] += 1
 
-                elif  v >= 200:
-                    pixelCount['white'] += 1
-
         if pixelCount['red'] > 0 or pixelCount['green'] > 0:
+
             return False
+
 
         return True
 
     def arePixelsWhite(self, img):
 
         if np.mean(img) >= 250:
+
             return True
 
         else:
+
             return False
 
     def cropImgWithCoordinates(self, img, x, y, width, height):
