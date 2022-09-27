@@ -142,9 +142,9 @@ class TextBot():
 
         roomName = []
 
-        for i in range(0, len(self.calendarAnalysis['text'])):
+        for i in range(0, len(self.roomNameAnalysis['text'])):
 
-            text = self.calendarAnalysis['text'][i]
+            text = self.roomNameAnalysis['text'][i]
 
             if self.isStringARoom(text):
                 roomName.append(text)
