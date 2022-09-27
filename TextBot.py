@@ -3,6 +3,7 @@ import numpy as np
 import pytesseract
 from pytesseract import Output
 import cv2
+import math
 
 class TextBot():
 
@@ -66,9 +67,13 @@ class TextBot():
         timeslot = self.getTimeSlot(cropImg, resultsCropImg)
 
         # Get roomSlot for the timetable and their coordinates
-        roomsSLot = self.getRoomCoordinate(cropImg, resultsCropImg)
+        roomNameImg = self.cropRoomName(cropImg, resultsCropImg)
 
-        self.getRoomAvailability('CRX-C526', timeslot, roomsSLot, cropImg)
+        resultsCropName = pytesseract.image_to_data(roomNameImg, output_type=Output.DICT)
+
+        roomsSLot = self.getRoomCoordinate(roomNameImg, resultsCropName)
+
+        roomAvailability = self.getRoomAvailability('CRX-C526', timeslot, roomsSLot, cropImg)
 
     def getRoomAvailability(self, roomName, timeSlot, roomSlot, img):
 
@@ -78,11 +83,17 @@ class TextBot():
 
         roomImg = self.cropRoomSlotFromImg(img, roomBoundingBox)
 
-        # imgTimeSlot = self.addTimeSlotTextToImg(roomImg, timeSlot)
+        timeSlotStatus = {}
 
-        # imgBoundBox = self.drawBoxAroundTimeSlot(roomImg, timeSlot)
+        for i in range (0, 4):
 
-        self.getTimeSlotStatus(roomImg, '12:00', timeSlot)
+            timeSlotName = timeSlot[i][0]
+
+            status = self.getTimeSlotStatus(roomImg, timeSlotName, timeSlot)
+
+            timeSlotStatus[timeSlotName] = status
+
+        return timeSlotStatus
 
     def getTimeSlotStatus(self, img, timeSlotName, timeSlot):
         # Get the status of the requested timeslot
@@ -94,9 +105,114 @@ class TextBot():
 
         self.showImg(timeSlotStatusImg)
 
-    def cropImgWithCoordinates(self, img, x,y, width, height):
+        if self.isTimeSlotFull(timeSlotStatusImg):
+            return FULLY_BOOK_INDICATOR
+
+        elif self.isTimeSlotFullyReservable(timeSlotStatusImg):
+            return FULLY_RESERVABLE_INDICATOR
+
+        elif self.isFirstHalfReservable(timeSlotStatusImg):
+            return FIRST_HALF_INDICATOR
+
+        elif self.isSecondHalfReservable(timeSlotStatusImg):
+            return SECOND_HALF_INDICATOR
+
+    def isTimeSlotFull(self, timeSlotImg):
+
+        if self.arePixelsBlue(timeSlotImg):
+            return True
+
+        return False
+
+    def isTimeSlotFullyReservable(self, timeSlotImg):
+
+        if self.arePixelsWhite(timeSlotImg):
+            return True
+
+        return False
+
+    def isFirstHalfReservable(self, timeSlotImg):
+
+        leftPortion = self.cropPortionsLeftAndRightTimeslot(timeSlotImg)[0]
+
+        if self.arePixelsWhite(leftPortion):
+            return True
+
+        return False
+
+    def isSecondHalfReservable(self, timeSlotImg):
+
+        rightPortion = self.cropPortionsLeftAndRightTimeslot(timeSlotImg)[1]
+
+        if self.arePixelsWhite(rightPortion):
+            return True
+
+        return False
+
+    def cropPortionsLeftAndRightTimeslot(self, img):
+
+        width = img.shape[1]
+        height = img.shape[0]
+
+        leftPortion = self.cropImgWithCoordinates(img, 5, 5, 20, height-3)
+
+        rightPortion = self.cropImgWithCoordinates(img, width-20, 5, width, height-3)
+
+        return (leftPortion, rightPortion)
+
+    def arePixelsBlue(self, img):
+
+        hsvImg = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        hue, sat, val = cv2.split(img)
+
+        pixelNumber = len(hsvImg) * len(hsvImg[0])
+
+        pixelCount = {'blue':0, 'green':0, 'red':0}
+
+        if self.arePixelsWhite(img):
+            return False
+
+        for y in range(0, len(hsvImg)):
+
+            for x in range(0, len(hsvImg[y])):
+
+                pixel = hsvImg[y][x]
+                h = pixel[0] * 2
+                v = pixel[2]
+
+                if 190 < h < 230:
+                    pixelCount['blue'] += 1
+
+                elif 80 < h < 100:
+                    pixelCount['green'] += 1
+
+                elif h < 10:
+                    pixelCount['red'] += 1
+
+                elif  v >= 200:
+                    pixelCount['white'] += 1
+
+        if pixelCount['red'] > 0 or pixelCount['green'] > 0:
+            return False
+
+        return True
+
+    def arePixelsWhite(self, img):
+
+        if np.mean(img) >= 250:
+            return True
+
+        else:
+            return False
+
+    def cropImgWithCoordinates(self, img, x, y, width, height):
+
+        width = int(width)
+        height = int(height)
 
         cropImg = img[y:y+height, x:x+width]
+
+        return cropImg
 
     def getTimeSlotId(self, timeSlotName, timeSlot):
         # Get the id of the timeslot requested
@@ -153,10 +269,30 @@ class TextBot():
             if roomName in roomSlot[i]:
                 return i
 
+    def cropRoomName(self, img, analyzedResults):
+
+        id = self.findIdOfDate(analyzedResults['text'])
+
+        pixelOffset = 20
+
+        boundingBox = self.getTextBoundingBox(analyzedResults, id)
+
+        imgHeight = img.shape[0]
+        left = boundingBox['x']['left']
+        top = boundingBox['y']['top']
+        width = boundingBox['x']['width']
+        height = boundingBox['y']['height']
+
+        cropImg = img[0:imgHeight, left :left + width + width]
+
+        return cropImg
+
     def getRoomCoordinate(self, img, analyzedResults):
         # Get the coordinates of all the rooms in the present screenCapture
 
         roomsSlot = []
+
+        self.cropRoomName(img, analyzedResults)
 
         for i in range(0, len(analyzedResults['text'])):
 
@@ -220,8 +356,6 @@ class TextBot():
         height = boundBox['y']['height']
 
         cv2.rectangle(img, (left, top), (left + width, top + height), (0, 0, 255), 2)
-
-        self.showImg(img)
 
     def getTimeSlot(self, img, analyzedResults):
         # Get the timeSlot from the current screencapture with their exact coordinates
