@@ -7,7 +7,6 @@ import math
 
 class TextBot():
 
-
     def isStringARoom(self, string):
         # check if provided string is a reservable room by the system
         # Like FTX-514
@@ -66,14 +65,30 @@ class TextBot():
         # Get timeslot for the timetable and their coordinates on the screencapture
         timeslot = self.getTimeSlot(cropImg, resultsCropImg)
 
-        # Get roomSlot for the timetable and their coordinates
+        # Get roomsSlot for the timetable and their coordinates
         roomNameImg = self.cropRoomName(cropImg, resultsCropImg)
 
         resultsCropName = pytesseract.image_to_data(roomNameImg, output_type=Output.DICT)
 
+        self.showImg(roomNameImg)
+
         roomsSLot = self.getRoomCoordinate(roomNameImg, resultsCropName)
 
-        roomAvailability = self.getRoomAvailability('CRX-C526', timeslot, roomsSLot, cropImg)
+        roomAvailability = self.getRoomAvailability('CRX-C523', timeslot, roomsSLot, cropImg)
+
+    def findIdOfDateWithYear(self, texts):
+        id = 0
+
+        for i in range(0, len(texts)):
+
+            if self.isDate(texts[i]):
+                id = i
+                break
+
+        if not self.isDate(texts[id]):
+            return None
+
+        return id
 
     def getRoomAvailability(self, roomName, timeSlot, roomSlot, img):
 
@@ -85,13 +100,19 @@ class TextBot():
 
         timeSlotStatus = {}
 
-        for i in range (0, 4):
+        for i in range (0, len(timeSlot)):
 
             timeSlotName = timeSlot[i][0]
 
             status = self.getTimeSlotStatus(roomImg, timeSlotName, timeSlot)
 
             timeSlotStatus[timeSlotName] = status
+
+        print(timeSlotStatus)
+
+        roomImg = self.addTimeSlotTextToImg(roomImg, timeSlot)
+
+        self.showImg(roomImg)
 
         return timeSlotStatus
 
@@ -102,8 +123,6 @@ class TextBot():
         timeSlotBoundingBox = timeSlot[id][1]
 
         timeSlotStatusImg = self.cropImgWithBoundingBox(img, timeSlotBoundingBox)
-
-        self.showImg(timeSlotStatusImg)
 
         if self.isTimeSlotFull(timeSlotStatusImg):
             return FULLY_BOOK_INDICATOR
@@ -145,6 +164,15 @@ class TextBot():
         rightPortion = self.cropPortionsLeftAndRightTimeslot(timeSlotImg)[1]
 
         if self.arePixelsWhite(rightPortion):
+            return True
+
+        return False
+
+    def isDate(self, string):
+
+        chars = list(string.split('/'))
+
+        if  len(chars) == 3:
             return True
 
         return False
@@ -271,9 +299,9 @@ class TextBot():
 
     def cropRoomName(self, img, analyzedResults):
 
-        id = self.findIdOfDate(analyzedResults['text'])
+        id = self.findIdOfDateWithYear(analyzedResults['text'])
 
-        pixelOffset = 20
+        pixelOffset = 10
 
         boundingBox = self.getTextBoundingBox(analyzedResults, id)
 
@@ -283,7 +311,7 @@ class TextBot():
         width = boundingBox['x']['width']
         height = boundingBox['y']['height']
 
-        cropImg = img[0:imgHeight, left :left + width + width]
+        cropImg = img[0:imgHeight, 0:left + width + pixelOffset]
 
         return cropImg
 
