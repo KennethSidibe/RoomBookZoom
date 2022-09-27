@@ -15,27 +15,6 @@ class TextBot():
     roomSlot = None
     timeSlot = None
 
-    def setCalendarImg(self, calendarImg):
-        self.calendarImg = calendarImg
-
-    def setRoomNameImg(self, roomNameImg):
-        self.roomNameImg = roomNameImg
-
-    def setCalendarAnalysis(self, analysisDict):
-        self.calendarAnalysis = analysisDict
-
-    def setRoomNameAnalysis(self, roomNameAnalysis):
-        self.roomNameAnalysis = roomNameAnalysis
-
-    def setRoomsName(self, rooms):
-        self.roomsName = rooms
-
-    def setTimeSlot(self, timeSlot):
-        self.timeSlot = timeSlot
-
-    def setRoomSlot(self, roomSlot):
-        self.roomSlot = roomSlot
-
     def isStringARoom(self, string):
         # check if provided string is a reservable room by the system
         # Like FTX-514
@@ -604,3 +583,49 @@ class TextBot():
                 return True
 
         return False
+
+    # SETTERS
+
+    def setCalendarImg(self, calendarImg):
+        self.calendarImg = calendarImg
+
+    def setRoomNameImg(self, roomNameImg):
+        self.roomNameImg = roomNameImg
+
+    def setCalendarAnalysis(self, analysisDict):
+        self.calendarAnalysis = analysisDict
+
+    def setRoomNameAnalysis(self, roomNameAnalysis):
+        self.roomNameAnalysis = roomNameAnalysis
+
+    def setRoomsName(self, rooms):
+        self.roomsName = rooms
+
+    def setTimeSlot(self, timeSlot):
+        self.timeSlot = timeSlot
+
+    def setRoomSlot(self, roomSlot):
+        self.roomSlot = roomSlot
+
+    # GETTERS
+
+    def getCalendarImg(self):
+        return self.calendarImg
+
+    def getRoomNameImg(self):
+        return self.roomNameImg
+
+    def getCalendarAnalysis(self):
+        return self.calendarAnalysis
+
+    def getRoomNameAnalysis(self):
+        return self.roomNameAnalysis
+
+    def getRoomsName(self):
+        return self.roomsName
+
+    def getTimeSlot(self):
+        return self.timeSlot
+
+    def getRoomSlot(self):
+        return self.roomSlot
