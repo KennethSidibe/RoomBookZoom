@@ -65,28 +65,332 @@ class TextBot():
         # Analyse the screencapture to find the timeTable coordinate
         wholeImageAnalysis = pytesseract.image_to_data(img, output_type=Output.DICT)
 
-        # crop the img to get only the calendar
-        # calendarImg = self.cropImage(img, results)
+        # calendarImg =  self.cropCalendarImage(img, wholeImageAnalysis)
+        # self.setCalendarImg(calendarImg)
+        #
+        # self.showImg(calendarImg)
 
-        calendarImg =  self.cropCalendarImage(img, wholeImageAnalysis)
-        self.setCalendarImg(calendarImg)
+        coord = self.findCropDateCoordinateByArea(img)
 
-        calendarAnalysis = pytesseract.image_to_data(self.calendarImg, output_type=Output.DICT)
-        self.setCalendarAnalysis(calendarAnalysis)
+        #
+        # calendarAnalysis = pytesseract.image_to_data(self.calendarImg, output_type=Output.DICT)
+        # self.setCalendarAnalysis(calendarAnalysis)
+        #
+        # # this function generate timeslot and roomSlot
+        # self.prepareRoomAnalysis()
+        #
+        # # Get the rooms' availability
+        # roomsAvailability = self.getAllRoomsAvailability()
+        # self.setRoomsAvailability(roomsAvailability)
+        #
+        # # get the image with the availability Text for test checking
+        # availabilityImg = self.visualizeRoomsAvailability()
+        #
+        # self.showImg(availabilityImg)
+        #
+        # return roomsAvailability
 
-        # this function generate timeslot and roomSlot
-        self.prepareRoomAnalysis()
+    def findCropDateCoordinateByHeight(self, screencaptureImg):
 
-        # Get the rooms availability
-        roomsAvailability = self.getAllRoomsAvailability()
-        self.setRoomsAvailability(roomsAvailability)
+        dateId = -1
 
-        # get the image with the availability Text for test checking
-        availabilityImg = self.visualizeRoomsAvailability()
+        imgPortions = self.getAllImagePortion(screencaptureImg)
 
-        self.showImg(availabilityImg)
+        for i in range(0, len(imgPortions)):
 
-        return roomsAvailability
+            imgPortion = imgPortions[i]
+
+            dateId, left, top = self.analyzePortion(imgPortion)
+
+            if dateId != -1:
+
+                imgPortionHeight = imgPortion.shape[0]
+                correctedTop = (i) * imgPortionHeight + top
+
+                return left, correctedTop
+
+        return 0, 0
+
+    def findCropDateCoordinateByArea(self, screencaptureImg):
+
+        dateId = -1
+
+        imgPortions = self.portionImageByArea(screencaptureImg)
+
+        dateId, left, top = self.analyzeAllImgPortions(imgPortions)
+
+        if dateId != -1:
+
+            return left, top
+
+        # if we could not find the date id, we will narrow our search
+        dateId, left, top = self.doNarrowSearch(screencaptureImg)
+
+        if dateId != -1:
+            return dateId, left, top
+
+        return  -1, 0, 0
+
+    def doNarrowSearch(self, screencaptureImg):
+
+        dateId = -1
+        widthCorrector = 0
+        heightCorrector = 0
+
+        for i in range(0, NARROW_SEARCH_MAX_ITERATION):
+
+            dateId, left, top, widthCorrector, heightCorrector\
+                = self.NarrowSearchOfCropDateCoordinate(screencaptureImg, widthCorrector, heightCorrector)
+
+            if dateId != -1:
+
+                return dateId, left, top
+
+        return -1, 0, 0
+
+    def NarrowSearchOfCropDateCoordinate(self, screenCaptureImg, widthCorrector=0, heightCorrector=0):
+
+        portionWidthCorrector = PORTION_WIDTH_CORRECTOR
+        portionHeightCorrector = PORTION_HEIGHT_CORRECTOR + heightCorrector
+
+        dateId = -1
+
+        imgPortions = self.portionImageByArea(screenCaptureImg, portionHeightCorrector, portionWidthCorrector)
+
+        dateId, left, top = self.analyzeAllImgPortions(imgPortions)
+
+        if dateId != -1:
+
+            return dateId, left, top, 0, 0
+
+        return -1, 0, 0, 2, 2
+
+    def analyzeAllImgPortions(self, imgPortions):
+
+        for row in range(0, len(imgPortions)):
+
+            for col in range(0, len(imgPortions[row])):
+
+                areaImg = imgPortions[row][col]
+
+                dateId, left, top = self.analyzePortion(areaImg, (row, col))
+
+                if dateId != -1:
+                    return dateId, left, top
+
+        return -1, 0, 0
+
+    def findCropDateCoordinateByWidth(self, screencaptureImg):
+
+        dateId = -1
+
+        imgPortions = self.getAllImagePortion(screencaptureImg)
+
+        for i in range(0, len(imgPortions)):
+
+            imgPortion = imgPortions[i]
+
+            dateId, left, top = self.analyzePortion(imgPortion)
+
+            if dateId != -1:
+
+                imgPortionHeight = imgPortion.shape[0]
+                correctedTop = (i) * imgPortionHeight + top
+
+                return left, correctedTop
+
+        return 0, 0
+
+    def getAllImagePortion(self, screenCaptureImg):
+
+        portions = []
+        currTop = 0
+        currLeft = 0
+
+        for i in range(0, PORTION_HEIGHT_DIVISOR):
+
+            portionImg, currLeft = self.portionImageByWidth(screenCaptureImg, currLeft)
+
+            portions.append(portionImg)
+
+        return portions
+
+    def portionImageByHeight(self, img, currTop=0, heightDivisor=0):
+
+        if heightDivisor >= 0:
+            divisor = heightDivisor
+
+        else:
+            divisor = PORTION_HEIGHT_DIVISOR
+
+        portionHeight = int((img.shape[0]) / divisor)
+        imgWidth = img.shape[1]
+
+        imgTop = portionHeight
+        imgHeight = currTop + portionHeight
+
+        imgPortion = img[currTop:imgHeight, 0:imgWidth]
+
+        return (imgPortion, imgHeight)
+
+    def portionImageByWidth(self, img, currLeft=0, widthDivisor=0):
+
+        if widthDivisor >= 0:
+            divisor = widthDivisor
+
+        else:
+            divisor = PORTION_WIDTH_DIVISOR
+
+        portionWidth = int((img.shape[1]) / divisor)
+        imgHeight = img.shape[1]
+
+        imgWidth = currLeft + portionWidth
+
+        imgPortion = img[0:imgHeight, currLeft:imgWidth]
+
+        return (imgPortion, imgWidth)
+
+    def portionImageByArea(self, img, portionHeightCorrector=0, portionWidthCorrector=0):
+
+        rowsImg = []
+        areaImg = []
+
+        rowDivision = PORTION_HEIGHT_DIVISOR + portionHeightCorrector
+        colDivision = PORTION_WIDTH_DIVISOR - portionWidthCorrector
+
+        for i in range(0, rowDivision):
+
+            rowsImg = self.portionToRowsImg(img, rowDivision)
+
+        if colDivision <= 0:
+            colDivision = 2
+
+        for rowImg in rowsImg:
+
+            if colDivision > 1:
+                columnsImg = self.portionToColumnsImg(rowImg, colDivision)
+
+                areaImg.append(columnsImg)
+
+        return areaImg
+
+    def portionToColumnsImg(self, rowImg, portionWidthCorrector=0):
+
+        currLeft = 0
+
+        columnPortionsImg = []
+
+        colDivision = portionWidthCorrector
+
+        if colDivision <= 0:
+            colDivision = 2
+
+
+        for i in range(0, colDivision):
+
+            areaImg, currLeft = self.portionImageByWidth(rowImg, currLeft, colDivision)
+
+            columnPortionsImg.append(areaImg)
+
+        return columnPortionsImg
+
+    def portionToRowsImg(self, screencaptureImg, portionHeightCorrector=0):
+
+        currTop = 0
+
+        rowPortionsImg =  []
+
+        rowDivision = portionHeightCorrector
+
+        if rowDivision <=  0:
+            rowDivision = 2
+
+
+        for i in range(0, rowDivision):
+
+            rowImg, currTop = self.portionImageByHeight(screencaptureImg, currTop, rowDivision)
+
+            rowPortionsImg.append(rowImg)
+
+        return rowPortionsImg
+
+    def analyzePortion(self, imgPortion, areaImgMatricePosition=None):
+
+        preprocess = self.preprocessDateImg(imgPortion)
+
+        portionAnalysis = pytesseract.image_to_data(preprocess, output_type=Output.DICT)
+        analyzedText = portionAnalysis['text']
+
+        dateId = self.findIdOfDate(analyzedText)
+
+        if dateId == None:
+
+            return -1, None, None
+
+        correctLeft = 0
+        correctTop = 0
+
+        # If we analyze a portion area (ie a portion grid)
+        if areaImgMatricePosition != None:
+
+            rowPosition = areaImgMatricePosition[0]
+            columnPosition = areaImgMatricePosition[1]
+
+            portionHeight = imgPortion.shape[0]
+            portionWidth = imgPortion.shape[1]
+
+            correctTop = portionHeight * (rowPosition + 1)
+            correctLeft = portionWidth * (columnPosition + 1)
+
+        left = portionAnalysis['left'][dateId] + correctLeft
+        top = portionAnalysis['top'][dateId] + correctTop
+
+        self.showImg(preprocess)
+
+        return dateId, left, top
+
+    def getKChannel(self, img):
+        # Conversion to CMYK (just the K channel):
+
+        # Convert to float and divide by 255:
+        imgFloat = img.astype(np.float) / 255.
+
+        # Calculate channel K:
+        kChannel = 1 - np.max(imgFloat, axis=2)
+
+        # Convert back to uint 8:
+        kChannel = (255 * kChannel).astype(np.uint8)
+
+        return kChannel
+
+    def preprocessDateImg(self, img):
+
+        # Preprocess img to upgrade text analysis result for current img capture
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        invert = cv2.bitwise_not(gray)
+
+        thresh = 90
+        max = 255
+
+        th, threshImg = cv2.threshold(invert, thresh, max, cv2.THRESH_BINARY_INV)
+
+        return threshImg
+
+    def preprocessTimeSlotImg(self, img):
+        # Preprocess img to upgrade text analysis result for current img timeslot
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        invert = cv2.bitwise_not(gray)
+
+        thresh = 165
+        max = 255
+
+        th, threshImg = cv2.threshold(invert, thresh, max, cv2.THRESH_BINARY_INV)
+
+        return threshImg
 
     def prepareRoomAnalysis(self):
         # Generate all the required attributes for the functioning of getRoomAvailability Method
@@ -614,24 +918,21 @@ class TextBot():
 
         return cropImg
 
-    def cropCalendarImage(self, img, analyzedResults):
+    def cropCalendarImage(self, screencaptureImg, analyzedResults):
         # Crop the calendar from the screencapture
 
         analyzedText = analyzedResults['text']
 
-        # Find the id of the text to crop the image
-        wordIdToCrop = self.findIdOfDate(analyzedText)
-
-        imgWidth = img.shape[1]
-        imgHeight = img.shape[0]
+        imgWidth = screencaptureImg.shape[1]
+        imgHeight = screencaptureImg.shape[0]
 
         pixelOffset = 15
 
-        boxLeft = analyzedResults['left'][wordIdToCrop]
-        boxTop = analyzedResults['top'][wordIdToCrop]
-        boxHeight = analyzedResults['height'][wordIdToCrop]
+        boxLeft, boxTop = self.findCropDateCoordinateByArea(screencaptureImg)
 
-        cropImg = img[boxTop - pixelOffset:imgHeight , boxLeft-pixelOffset:imgWidth]
+        print(boxLeft, boxTop)
+
+        cropImg = screencaptureImg[boxTop - pixelOffset:imgHeight , boxLeft-pixelOffset:imgWidth]
 
         return cropImg
 
@@ -648,20 +949,6 @@ class TextBot():
                        }
 
         return boundingBox
-
-    def preprocessTimeSlotImg(self, img):
-        # Preprocess img to upgrade text analysis result for current img timeslot
-
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-        invert = cv2.bitwise_not(gray)
-
-        thresh = 165
-        max = 255
-
-        th, threshImg = cv2.threshold(invert, thresh, max, cv2.THRESH_BINARY_INV)
-
-        return threshImg
 
     def showImg(self, img):
         # Show image with wait statement
