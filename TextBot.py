@@ -72,6 +72,8 @@ class TextBot():
 
         coord = self.findCropDateCoordinateByArea(img)
 
+        print(coord)
+
         #
         # calendarAnalysis = pytesseract.image_to_data(self.calendarImg, output_type=Output.DICT)
         # self.setCalendarAnalysis(calendarAnalysis)
@@ -339,13 +341,11 @@ class TextBot():
             portionHeight = imgPortion.shape[0]
             portionWidth = imgPortion.shape[1]
 
-            correctTop = portionHeight * (rowPosition + 1)
-            correctLeft = portionWidth * (columnPosition + 1)
+            correctTop = portionHeight * (rowPosition)
+            correctLeft = portionWidth * (columnPosition)
 
         left = portionAnalysis['left'][dateId] + correctLeft
         top = portionAnalysis['top'][dateId] + correctTop
-
-        self.showImg(preprocess)
 
         return dateId, left, top
 
@@ -929,8 +929,6 @@ class TextBot():
         pixelOffset = 15
 
         boxLeft, boxTop = self.findCropDateCoordinateByArea(screencaptureImg)
-
-        print(boxLeft, boxTop)
 
         cropImg = screencaptureImg[boxTop - pixelOffset:imgHeight , boxLeft-pixelOffset:imgWidth]
 
