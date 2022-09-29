@@ -25,12 +25,22 @@ if __name__ == '__main__':
 
     textBot = TextBot()
 
-    # bookBot.login()
+    bookBot.login()
 
     screenFilePath = 'SCREEN_IMG.png'
 
     # start = time.time()
-    availability = textBot.analyze(mobileFilepath)
+
+    for i in range(1, 8):
+
+        fileName = 'SCREEN_' + str(i) + '_IMG.png'
+
+        screenFilePath = 'screencapture/' + fileName
+
+        availability = textBot.analyze(screenFilePath)
+
+
+
     # elapsedTime = time.time() - start
 
     # print(availability)
