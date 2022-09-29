@@ -65,14 +65,10 @@ class TextBot():
         # Analyse the screencapture to find the timeTable coordinate
         wholeImageAnalysis = pytesseract.image_to_data(img, output_type=Output.DICT)
 
-        # calendarImg =  self.cropCalendarImage(img, wholeImageAnalysis)
-        # self.setCalendarImg(calendarImg)
+        calendarImg =  self.cropCalendarImage(img, wholeImageAnalysis)
+        self.setCalendarImg(calendarImg)
         #
-        # self.showImg(calendarImg)
-
-        coord = self.findCropDateCoordinateByArea(img)
-
-        print(coord)
+        self.showImg(calendarImg)
 
         #
         # calendarAnalysis = pytesseract.image_to_data(self.calendarImg, output_type=Output.DICT)
@@ -129,9 +125,9 @@ class TextBot():
         dateId, left, top = self.doNarrowSearch(screencaptureImg)
 
         if dateId != -1:
-            return dateId, left, top
+            return left, top
 
-        return  -1, 0, 0
+        return  0, 0
 
     def doNarrowSearch(self, screencaptureImg):
 
