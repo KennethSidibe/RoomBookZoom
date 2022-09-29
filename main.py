@@ -28,7 +28,7 @@ if __name__ == '__main__':
     # bookBot.login()
 
     start = time.time()
-    availability = textBot.analyze(filepath8)
+    availability = textBot.analyze(filepath6)
     elapsedTime = time.time() - start
 
     # print(availability)

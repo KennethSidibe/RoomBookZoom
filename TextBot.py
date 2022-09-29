@@ -4,6 +4,7 @@ import pytesseract
 from pytesseract import Output
 import cv2
 import math
+import time
 
 class TextBot():
 
@@ -65,28 +66,25 @@ class TextBot():
         # Analyse the screencapture to find the timeTable coordinate
         wholeImageAnalysis = pytesseract.image_to_data(img, output_type=Output.DICT)
 
-        calendarImg =  self.cropCalendarImage(img, wholeImageAnalysis)
+        calendarImg =  self.cropCalendarImage(img)
         self.setCalendarImg(calendarImg)
-        #
-        self.showImg(calendarImg)
 
-        #
-        # calendarAnalysis = pytesseract.image_to_data(self.calendarImg, output_type=Output.DICT)
-        # self.setCalendarAnalysis(calendarAnalysis)
-        #
-        # # this function generate timeslot and roomSlot
-        # self.prepareRoomAnalysis()
-        #
-        # # Get the rooms' availability
-        # roomsAvailability = self.getAllRoomsAvailability()
-        # self.setRoomsAvailability(roomsAvailability)
-        #
-        # # get the image with the availability Text for test checking
-        # availabilityImg = self.visualizeRoomsAvailability()
-        #
-        # self.showImg(availabilityImg)
-        #
-        # return roomsAvailability
+        calendarAnalysis = pytesseract.image_to_data(self.calendarImg, output_type=Output.DICT)
+        self.setCalendarAnalysis(calendarAnalysis)
+
+        # this function generate timeslot and roomSlot
+        self.prepareRoomAnalysis()
+
+        # Get the rooms' availability
+        roomsAvailability = self.getAllRoomsAvailability()
+        self.setRoomsAvailability(roomsAvailability)
+
+        # get the image with the availability Text for test checking
+        availabilityImg = self.visualizeRoomsAvailability()
+
+        self.showImg(availabilityImg)
+
+        return roomsAvailability
 
     def findCropDateCoordinateByHeight(self, screencaptureImg):
 
@@ -914,17 +912,15 @@ class TextBot():
 
         return cropImg
 
-    def cropCalendarImage(self, screencaptureImg, analyzedResults):
+    def cropCalendarImage(self, screencaptureImg):
         # Crop the calendar from the screencapture
 
-        analyzedText = analyzedResults['text']
+        boxLeft, boxTop = self.findCropDateCoordinateByArea(screencaptureImg)
 
         imgWidth = screencaptureImg.shape[1]
         imgHeight = screencaptureImg.shape[0]
 
         pixelOffset = 15
-
-        boxLeft, boxTop = self.findCropDateCoordinateByArea(screencaptureImg)
 
         cropImg = screencaptureImg[boxTop - pixelOffset:imgHeight , boxLeft-pixelOffset:imgWidth]
 
