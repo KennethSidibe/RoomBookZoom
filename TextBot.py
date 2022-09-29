@@ -16,6 +16,7 @@ class TextBot():
     roomSlot = None
     timeSlot = None
     roomsAvailability = None
+    dateCoordinate = None
 
     def isStringARoom(self, string):
         # check if provided string is a reservable room by the system
@@ -57,6 +58,21 @@ class TextBot():
 
         else:
             return False
+
+    def isStringATimeSlot(self, string):
+
+        timeSlots = ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00',
+                    '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00',
+                    '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
+                    ]
+
+        for timeSlot in timeSlots:
+
+            if string == timeSlot:
+
+                return True
+
+        return False
 
     def analyze(self, filePath):
 
@@ -113,19 +129,19 @@ class TextBot():
 
         imgPortions = self.portionImageByArea(screencaptureImg)
 
-        dateId, left, top = self.analyzeAllImgPortions(imgPortions)
+        dateId, left, top, height, width = self.analyzeAllImgPortions(imgPortions)
 
         if dateId != -1:
 
-            return left, top
+            return left, top, height, width
 
         # if we could not find the date id, we will narrow our search
-        dateId, left, top = self.doNarrowSearch(screencaptureImg)
+        dateId, left, top, height, width = self.doNarrowSearch(screencaptureImg)
 
         if dateId != -1:
-            return left, top
+            return left, top, height, width
 
-        return  0, 0
+        return  0, 0, 0, 0
 
     def doNarrowSearch(self, screencaptureImg):
 
@@ -135,14 +151,14 @@ class TextBot():
 
         for i in range(0, NARROW_SEARCH_MAX_ITERATION):
 
-            dateId, left, top, widthCorrector, heightCorrector\
+            dateId, left, top, widthCorrector, heightCorrector, height, width\
                 = self.NarrowSearchOfCropDateCoordinate(screencaptureImg, widthCorrector, heightCorrector)
 
             if dateId != -1:
 
-                return dateId, left, top
+                return dateId, left, top, height, width
 
-        return -1, 0, 0
+        return -1, 0, 0, 0, 0
 
     def NarrowSearchOfCropDateCoordinate(self, screenCaptureImg, widthCorrector=0, heightCorrector=0):
 
@@ -153,11 +169,11 @@ class TextBot():
 
         imgPortions = self.portionImageByArea(screenCaptureImg, portionHeightCorrector, portionWidthCorrector)
 
-        dateId, left, top = self.analyzeAllImgPortions(imgPortions)
+        dateId, left, top, width, height = self.analyzeAllImgPortions(imgPortions)
 
         if dateId != -1:
 
-            return dateId, left, top, 0, 0
+            return dateId, left, top, 0, 0, height, width
 
         return -1, 0, 0, 2, 2
 
@@ -169,12 +185,12 @@ class TextBot():
 
                 areaImg = imgPortions[row][col]
 
-                dateId, left, top = self.analyzePortion(areaImg, (row, col))
+                dateId, left, top, height, width = self.analyzePortion(areaImg, (row, col))
 
                 if dateId != -1:
-                    return dateId, left, top
+                    return dateId, left, top, height, width
 
-        return -1, 0, 0
+        return -1, 0, 0, 0, 0
 
     def findCropDateCoordinateByWidth(self, screencaptureImg):
 
@@ -320,8 +336,7 @@ class TextBot():
         dateId = self.findIdOfDate(analyzedText)
 
         if dateId == None:
-
-            return -1, None, None
+            return -1, None, None, None, None
 
         correctLeft = 0
         correctTop = 0
@@ -340,8 +355,10 @@ class TextBot():
 
         left = portionAnalysis['left'][dateId] + correctLeft
         top = portionAnalysis['top'][dateId] + correctTop
+        height = portionAnalysis['height'][dateId]
+        width = portionAnalysis['width'][dateId]
 
-        return dateId, left, top
+        return dateId, left, top, height, width
 
     def getKChannel(self, img):
         # Conversion to CMYK (just the K channel):
@@ -391,19 +408,20 @@ class TextBot():
 
         if (type(self.calendarImg) == type(np.array([]))):
 
-            if not ( self.calendarImg.size == 0 or bool(self.calendarAnalysis) == False ):
-
+            if not ( self.calendarImg.size == 0 or self.dateCoordinate == None ):
 
                 # Get timeslot for the timetable and their coordinates on the screencapture
                 timeSlot = self.getTimeSlot()
                 self.setTimeSlot(timeSlot)
 
                 # Get roomsSlot for the timetable and their coordinates
-                roomNameImg = self.cropRoomName(self.calendarImg, self.calendarAnalysis)
+                roomNameImg = self.cropRoomName(self.calendarImg)
                 self.setRoomNameImg(roomNameImg)
 
+                self.showImg(roomNameImg)
+
                 # Get the roomName Image Analysis
-                roomNameAnalysis = pytesseract.image_to_data(self.roomNameImg, output_type=Output.DICT)
+                roomNameAnalysis = pytesseract.image_to_data(roomNameImg, output_type=Output.DICT)
                 self.setRoomNameAnalysis(roomNameAnalysis)
 
                 # Get all the roomsName
@@ -759,21 +777,17 @@ class TextBot():
 
                 return i
 
-    def cropRoomName(self, img, analyzedResults):
-
-        id = self.findIdOfDateWithYear(analyzedResults['text'])
+    def cropRoomName(self, img):
 
         pixelOffset = 10
 
-        boundingBox = self.getTextBoundingBox(analyzedResults, id)
-
         imgHeight = img.shape[0]
-        left = boundingBox['x']['left']
-        top = boundingBox['y']['top']
-        width = boundingBox['x']['width']
-        height = boundingBox['y']['height']
+        left = self.dateCoordinate[0]
+        top = self.dateCoordinate[1]
+        width = self.dateCoordinate[2]
+        height = self.dateCoordinate[3]
 
-        cropImg = img[0:imgHeight, 0:left + width + pixelOffset]
+        cropImg = img[0:imgHeight, 0:left + width]
 
         return cropImg
 
@@ -781,7 +795,6 @@ class TextBot():
 
         # Get the coordinates of all the rooms in the present screenCapture
         roomsSlot = []
-
 
         for i in range(0, len(self.roomNameAnalysis['text'])):
 
@@ -812,6 +825,7 @@ class TextBot():
                 break
 
         if not self.isWeekday(texts[id]):
+
             return None
 
         return id
@@ -847,19 +861,15 @@ class TextBot():
         cv2.rectangle(img, (left, top), (left + width, top + height), (0, 0, 255), 2)
 
     def getTimeSlot(self):
+
         # Get the timeSlot from the current screencapture with their exact coordinates
-
         imgWidth = self.calendarImg.shape[1]
-
-        analyzedText = self.calendarAnalysis['text']
-
-        wordIdToCrop = self.findIdOfDate(analyzedText)
 
         pixelOffset = 15
 
-        boxLeft = self.calendarAnalysis['left'][wordIdToCrop]
-        boxTop = self.calendarAnalysis['top'][wordIdToCrop]
-        boxHeight = self.calendarAnalysis['height'][wordIdToCrop]
+        boxLeft = self.dateCoordinate[0]
+        boxTop = self.dateCoordinate[1]
+        boxHeight = self.dateCoordinate[2]
 
         timeSlot = []
 
@@ -872,10 +882,11 @@ class TextBot():
         for i in range(0, len(timeAnalyzed['text'])):
 
             confidenceLevel = timeAnalyzed['conf'][i]
+            text = timeAnalyzed['text'][i]
 
-            if confidenceLevel >= 60:
+            if confidenceLevel >= 30 and self.isStringATimeSlot(text):
 
-                time = timeAnalyzed['text'][i]
+                time = text
 
                 boundBox = self.getTextBoundingBox(timeAnalyzed, i)
                 self.addWidthOffsetToBoundingBox(boundBox)
@@ -915,7 +926,9 @@ class TextBot():
     def cropCalendarImage(self, screencaptureImg):
         # Crop the calendar from the screencapture
 
-        boxLeft, boxTop = self.findCropDateCoordinateByArea(screencaptureImg)
+        boxLeft, boxTop, boxHeight, boxWidth = self.findCropDateCoordinateByArea(screencaptureImg)
+
+        self.dateCoordinate = (boxLeft, boxTop, boxHeight, boxWidth)
 
         imgWidth = screencaptureImg.shape[1]
         imgHeight = screencaptureImg.shape[0]
