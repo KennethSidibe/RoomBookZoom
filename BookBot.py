@@ -103,10 +103,22 @@ class BookBot():
         reduceLoginBox.click()
         yesButton.click()
 
-        sleep(3)
+        sleep(5)
+
+        # access the booking schedule page
+        bookRoomButtonXPath = '//*[@id="navReservation"]/a'
+
+        bookRoomButton = driver.find_element(By.XPATH, bookRoomButtonXPath)
+
+        bookRoomButton.click()
+
+        # Take screenshot of the page
+        driver.save_screenshot('SCREEN_IMG.png')
 
         # input is just to wait and see results
-        input(':')
+        # input(':')
+
+        driver.quit()
 
     def getOTP(self):
 
