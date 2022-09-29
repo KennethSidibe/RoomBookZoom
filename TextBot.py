@@ -175,7 +175,7 @@ class TextBot():
 
             return dateId, left, top, 0, 0, height, width
 
-        return -1, 0, 0, 2, 2
+        return -1, 0, 0, 2, 2, 0, 0
 
     def analyzeAllImgPortions(self, imgPortions):
 
@@ -417,8 +417,6 @@ class TextBot():
                 # Get roomsSlot for the timetable and their coordinates
                 roomNameImg = self.cropRoomName(self.calendarImg)
                 self.setRoomNameImg(roomNameImg)
-
-                self.showImg(roomNameImg)
 
                 # Get the roomName Image Analysis
                 roomNameAnalysis = pytesseract.image_to_data(roomNameImg, output_type=Output.DICT)
