@@ -113,11 +113,17 @@ class BookBot():
         bookRoomButton.click()
 
         # Take screenshot of the page
-        driver.save_screenshot('SCREEN_IMG.png')
+        for i in range(1, 8):
+
+            fileName = 'SCREEN_' + str(i) + '_IMG.png'
+
+            imgFilePath = 'screencapture/' + fileName
+
+            driver.save_screenshot(imgFilePath)
+
+            driver = self.goToNextPage(driver)
 
         # input is just to wait and see results
-        # input(':')
-
         driver.quit()
 
     def getOTP(self):
@@ -125,3 +131,15 @@ class BookBot():
         totp = pyotp.parse_uri(uoAuthSecretURI)
 
         return totp.now()
+
+    def goToNextPage(self, driver):
+
+        # Go to next page
+        nextPageButtonXPath = '//*[@id="page-schedule"]/div[2]/div[2]/a[3]'
+        nextPageButton = driver.find_element(By.XPATH, nextPageButtonXPath)
+
+        nextPageButton.click()
+
+        sleep(3)
+
+        return driver
