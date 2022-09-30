@@ -160,6 +160,14 @@ class TextBot():
 
         return -1, 0, 0, 0, 0
 
+    def showAllImgPortions(self, imgPortions):
+
+        for row in imgPortions:
+
+            for img in row:
+
+                self.showImg(img)
+
     def NarrowSearchOfCropDateCoordinate(self, screenCaptureImg, widthCorrector=0, heightCorrector=0):
 
         portionWidthCorrector = PORTION_WIDTH_CORRECTOR
