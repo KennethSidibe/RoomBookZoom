@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from credentials import *
 import undetected_chromedriver.v2 as uc
 from time import sleep
@@ -156,10 +157,30 @@ class BookBot():
 
         options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
 
+        capa = DesiredCapabilities.CHROME
+        capa["pageLoadStrategy"] = "none"
+
         # creating the driver
-        driver = uc.Chrome(options=options)
+        driver = uc.Chrome(options=options, desired_capabilities=capa)
+        wait = WebDriverWait(driver, 20)
 
         tableDemoUrl = 'https://www.techlistic.com/p/demo-selenium-practice.html'
 
         # Opening the url
         driver.get(tableDemoUrl)
+
+        tableXPath = '//table[@id="customers"]'
+        secondTableRowHeadXPath = '//table[@class="tsc_table_s13"]/tbody/tr/th'
+
+        wait.until(EC.presence_of_element_located((By.XPATH, secondTableRowHeadXPath)))
+
+        driver.execute_script("window.stop();")
+
+        table = driver.find_elements(By.XPATH, tableXPath)
+        secondTableRowHead = driver.find_elements(By.XPATH, secondTableRowHeadXPath)
+
+        for rowHead in secondTableRowHead:
+            print(rowHead.text)
+
+
+        driver.quit()
