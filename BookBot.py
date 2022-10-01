@@ -14,6 +14,20 @@ from constant import *
 
 class BookBot():
 
+    rooms = ['CRX-C520', 'CRX-C521', 'CRX-C522', 'CRX-C523', 'CRX-C524', 'CRX-C525',
+             'CRX-C526', 'CRX-C527', 'CRX-C528','CRX-C529', 'CRX-C541', 'CRX-C542',
+             'CRX-C543', 'CRX-C544', 'CRX-C545',
+
+             'FTX-514', 'FTX-515', 'FTX-525A', 'FTX-525B', 'FTX-525C', 'FTX-525D',
+             'FTX-525F', 'FTX-525G', 'FTX-525H', 'FTX-525J',
+
+             'MRT-404', 'MRT-405', 'MRT-406', 'MRT-407', 'MRT-408', 'MRT-409',
+             'MRT-410', 'MRT-411', 'MRT-412', 'MRT-415', 'MRT-417', 'MRT-418',
+
+             'RGN-1020J', 'RGN-1020K', 'RGN-1020L', 'RGN-1020M', 'RGN-1020N', 'RGN-1020P'
+             ]
+
+
     def login(self):
 
         # Options
@@ -164,7 +178,13 @@ class BookBot():
 
             texts.append(element.text)
 
+        if len(texts) == 1:
+            return texts[0], driver
+
         return texts, driver
+
+    def getRoomsAvailability(self, driver):
+        print("hi")
 
     def testRetrieveTable(self):
 
@@ -189,16 +209,17 @@ class BookBot():
         reservationTableXPath = '//table[@class="reservations"]'
         timeSlotXPath = '//*[@class="reslabel"]'
         roomsXPath = '//td[@class="resourcename"]'
+        reservationDateXPath = '//*[@class="resdate"]'
 
         wait.until(EC.presence_of_element_located((By.XPATH, reservationTableXPath)))
 
         # driver.execute_script("window.stop();")
 
-        reservationDate, driver = self.getReservationDate(driver)
-
+        reservationDate, driver = self.getElementsText(driver, reservationDateXPath)
         timeSlot, driver = self.getElementsText(driver, timeSlotXPath)
         rooms, driver = self.getElementsText(driver, roomsXPath)
 
+        print(reservationDate)
         print(timeSlot)
         print(rooms)
 
