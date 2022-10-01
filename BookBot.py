@@ -154,6 +154,18 @@ class BookBot():
 
         return reservationDate, driver
 
+    def getElementsText(self, driver, xPath):
+
+        texts = []
+
+        elements = driver.find_elements(By.XPATH, xPath)
+
+        for element in elements:
+
+            texts.append(element.text)
+
+        return texts, driver
+
     def testRetrieveTable(self):
 
         # Options
@@ -175,6 +187,8 @@ class BookBot():
         driver.get(tableDemoUrl)
 
         reservationTableXPath = '//table[@class="reservations"]'
+        timeSlotXPath = '//*[@class="reslabel"]'
+        roomsXPath = '//td[@class="resourcename"]'
 
         wait.until(EC.presence_of_element_located((By.XPATH, reservationTableXPath)))
 
@@ -182,6 +196,10 @@ class BookBot():
 
         reservationDate, driver = self.getReservationDate(driver)
 
-        print(reservationDate)
+        timeSlot, driver = self.getElementsText(driver, timeSlotXPath)
+        rooms, driver = self.getElementsText(driver, roomsXPath)
+
+        print(timeSlot)
+        print(rooms)
 
         driver.quit()
