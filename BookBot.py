@@ -145,18 +145,23 @@ class BookBot():
 
         return driver
 
+    def getReservationDate(self, driver):
+
+        reservationDateXPath = '//*[@class="resdate"]'
+        reservationDateElement = driver.find_element(By.XPATH, reservationDateXPath)
+
+        reservationDate = reservationDateElement.text
+
+        return reservationDate, driver
+
     def testRetrieveTable(self):
 
         # Options
         options = uc.ChromeOptions()
-
         options.user_data_dir = "c:\\temp\\profile"
-
         options.add_argument('--user-data-dir=c:\\temp\\profile2')
         options.add_argument('--incognito')
-
         options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
-
         capa = DesiredCapabilities.CHROME
         capa["pageLoadStrategy"] = "none"
 
@@ -164,23 +169,19 @@ class BookBot():
         driver = uc.Chrome(options=options, desired_capabilities=capa)
         wait = WebDriverWait(driver, 20)
 
-        tableDemoUrl = 'https://www.techlistic.com/p/demo-selenium-practice.html'
+        tableDemoUrl = 'file:///Users/kanekisidibe/Developer/Python/RoomBookZoom/HtmlBookSchedulePage.html'
 
         # Opening the url
         driver.get(tableDemoUrl)
 
-        tableXPath = '//table[@id="customers"]'
-        secondTableRowHeadXPath = '//table[@class="tsc_table_s13"]/tbody/tr/th'
+        reservationTableXPath = '//table[@class="reservations"]'
 
-        wait.until(EC.presence_of_element_located((By.XPATH, secondTableRowHeadXPath)))
+        wait.until(EC.presence_of_element_located((By.XPATH, reservationTableXPath)))
 
-        driver.execute_script("window.stop();")
+        # driver.execute_script("window.stop();")
 
-        table = driver.find_elements(By.XPATH, tableXPath)
-        secondTableRowHead = driver.find_elements(By.XPATH, secondTableRowHeadXPath)
+        reservationDate, driver = self.getReservationDate(driver)
 
-        for rowHead in secondTableRowHead:
-            print(rowHead.text)
-
+        print(reservationDate)
 
         driver.quit()
