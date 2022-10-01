@@ -449,14 +449,14 @@ class TextBot():
 
         roomImg = self.cropRoomSlotFromImg(self.calendarImg, roomBoundingBox)
 
-        roomAvailability = {}
+        roomAvailability = []
 
         for i in range(0, len(self.timeSlot)):
             timeSlotName = self.timeSlot[i][0]
 
             status = self.getTimeSlotStatus(roomImg, timeSlotName)
 
-            roomAvailability[timeSlotName] = status
+            roomAvailability.append({'timeSlot':timeSlotName, 'status': status})
 
         return roomAvailability
 
@@ -506,7 +506,7 @@ class TextBot():
         for i in range(0, len(self.timeSlot)):
 
             slot = self.timeSlot[i][0]
-            availability = self.roomsAvailability[roomName][slot]
+            availability = self.roomsAvailability[roomName][i]['status']
 
             left = self.timeSlot[i][1]['x']['left']
 
