@@ -143,3 +143,7 @@ class BookBot():
         sleep(3)
 
         return driver
+
+    def testRetrieveTable(self):
+
+        print('hi')
