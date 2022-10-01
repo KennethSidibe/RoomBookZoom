@@ -146,4 +146,20 @@ class BookBot():
 
     def testRetrieveTable(self):
 
-        print('hi')
+        # Options
+        options = uc.ChromeOptions()
+
+        options.user_data_dir = "c:\\temp\\profile"
+
+        options.add_argument('--user-data-dir=c:\\temp\\profile2')
+        options.add_argument('--incognito')
+
+        options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+
+        # creating the driver
+        driver = uc.Chrome(options=options)
+
+        tableDemoUrl = 'https://www.techlistic.com/p/demo-selenium-practice.html'
+
+        # Opening the url
+        driver.get(tableDemoUrl)
