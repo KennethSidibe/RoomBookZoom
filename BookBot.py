@@ -159,15 +159,6 @@ class BookBot():
 
         return driver
 
-    def getReservationDate(self, driver):
-
-        reservationDateXPath = '//*[@class="resdate"]'
-        reservationDateElement = driver.find_element(By.XPATH, reservationDateXPath)
-
-        reservationDate = reservationDateElement.text
-
-        return reservationDate, driver
-
     def getElementsText(self, driver, xPath):
 
         texts = []
@@ -182,9 +173,6 @@ class BookBot():
             return texts[0], driver
 
         return texts, driver
-
-    def getRoomsAvailability(self, driver):
-        print("hi")
 
     def testRetrieveTable(self):
 
