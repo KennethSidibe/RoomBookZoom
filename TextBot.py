@@ -74,6 +74,8 @@ class TextBot():
 
         return False
 
+    # Main methods
+
     def analyze(self, filePath):
 
         # Loading the screencapture
@@ -101,6 +103,139 @@ class TextBot():
         self.showImg(availabilityImg)
 
         return roomsAvailability
+
+    def getAllImagePortion(self, screenCaptureImg):
+
+        portions = []
+        currTop = 0
+        currLeft = 0
+
+        for i in range(0, PORTION_HEIGHT_DIVISOR):
+
+            portionImg, currLeft = self.portionImageByWidth(screenCaptureImg, currLeft)
+
+            portions.append(portionImg)
+
+        return portions
+
+    def analyzeAllImgPortions(self, imgPortions):
+
+        for row in range(0, len(imgPortions)):
+
+            for col in range(0, len(imgPortions[row])):
+
+                areaImg = imgPortions[row][col]
+
+                dateId, left, top, height, width = self.analyzePortion(areaImg, (row, col))
+
+                if dateId != -1:
+                    return dateId, left, top, height, width
+
+        return -1, 0, 0, 0, 0
+
+    def analyzePortion(self, imgPortion, areaImgMatricePosition=None):
+
+        preprocess = self.preprocessDateImg(imgPortion)
+
+        portionAnalysis = pytesseract.image_to_data(preprocess, output_type=Output.DICT)
+        analyzedText = portionAnalysis['text']
+
+        dateId = self.findIdOfDate(analyzedText)
+
+        if dateId == None:
+            return -1, None, None, None, None
+
+        correctLeft = 0
+        correctTop = 0
+
+        # If we analyze a portion area (ie a portion grid)
+        if areaImgMatricePosition != None:
+
+            rowPosition = areaImgMatricePosition[0]
+            columnPosition = areaImgMatricePosition[1]
+
+            portionHeight = imgPortion.shape[0]
+            portionWidth = imgPortion.shape[1]
+
+            correctTop = portionHeight * (rowPosition)
+            correctLeft = portionWidth * (columnPosition)
+
+        left = portionAnalysis['left'][dateId] + correctLeft
+        top = portionAnalysis['top'][dateId] + correctTop
+        height = portionAnalysis['height'][dateId]
+        width = portionAnalysis['width'][dateId]
+
+        return dateId, left, top, height, width
+
+    def getRoomAvailability(self, roomName):
+
+        roomId = self.getRoomId(roomName)
+
+        roomBoundingBox = self.roomSlot[roomId][1]
+
+        roomImg = self.cropRoomSlotFromImg(self.calendarImg, roomBoundingBox)
+
+        roomAvailability = []
+
+        for i in range(0, len(self.timeSlot)):
+            timeSlotName = self.timeSlot[i][0]
+
+            status = self.getTimeSlotStatus(roomImg, timeSlotName)
+
+            roomAvailability.append({'timeSlot':timeSlotName, 'status': status})
+
+        return roomAvailability
+
+    def getAllRoomsAvailability(self):
+
+        roomsAvailability = {}
+
+        for room in self.roomsName:
+
+            availability = self.getRoomAvailability(room)
+
+            roomsAvailability[room] = availability
+
+
+        return roomsAvailability
+
+    def generateRoomSlot(self):
+
+        # Get the coordinates of all the rooms in the present screenCapture
+        roomsSlot = []
+
+        for i in range(0, len(self.roomNameAnalysis['text'])):
+
+            if self.roomNameAnalysis['conf'][i] >= 30:
+
+                text = self.roomNameAnalysis['text'][i]
+
+                if self.isStringARoom(text):
+
+                    boundingBox = self.getTextBoundingBox(self.roomNameAnalysis, i)
+                    slot = [text, boundingBox]
+
+                    roomsSlot.append(slot)
+
+        return  roomsSlot
+
+    def generateRoomsName(self):
+
+        roomName = []
+
+        for i in range(0, len(self.roomNameAnalysis['text'])):
+
+            text = self.roomNameAnalysis['text'][i]
+
+            if self.isStringARoom(text):
+                roomName.append(text)
+
+        return roomName
+
+
+
+    # Cropping functions
+
 
     def findCropDateCoordinateByHeight(self, screencaptureImg):
 
@@ -185,21 +320,6 @@ class TextBot():
 
         return -1, 0, 0, 2, 2, 0, 0
 
-    def analyzeAllImgPortions(self, imgPortions):
-
-        for row in range(0, len(imgPortions)):
-
-            for col in range(0, len(imgPortions[row])):
-
-                areaImg = imgPortions[row][col]
-
-                dateId, left, top, height, width = self.analyzePortion(areaImg, (row, col))
-
-                if dateId != -1:
-                    return dateId, left, top, height, width
-
-        return -1, 0, 0, 0, 0
-
     def findCropDateCoordinateByWidth(self, screencaptureImg):
 
         dateId = -1
@@ -220,20 +340,6 @@ class TextBot():
                 return left, correctedTop
 
         return 0, 0
-
-    def getAllImagePortion(self, screenCaptureImg):
-
-        portions = []
-        currTop = 0
-        currLeft = 0
-
-        for i in range(0, PORTION_HEIGHT_DIVISOR):
-
-            portionImg, currLeft = self.portionImageByWidth(screenCaptureImg, currLeft)
-
-            portions.append(portionImg)
-
-        return portions
 
     def portionImageByHeight(self, img, currTop=0, heightDivisor=0):
 
@@ -334,39 +440,7 @@ class TextBot():
 
         return rowPortionsImg
 
-    def analyzePortion(self, imgPortion, areaImgMatricePosition=None):
 
-        preprocess = self.preprocessDateImg(imgPortion)
-
-        portionAnalysis = pytesseract.image_to_data(preprocess, output_type=Output.DICT)
-        analyzedText = portionAnalysis['text']
-
-        dateId = self.findIdOfDate(analyzedText)
-
-        if dateId == None:
-            return -1, None, None, None, None
-
-        correctLeft = 0
-        correctTop = 0
-
-        # If we analyze a portion area (ie a portion grid)
-        if areaImgMatricePosition != None:
-
-            rowPosition = areaImgMatricePosition[0]
-            columnPosition = areaImgMatricePosition[1]
-
-            portionHeight = imgPortion.shape[0]
-            portionWidth = imgPortion.shape[1]
-
-            correctTop = portionHeight * (rowPosition)
-            correctLeft = portionWidth * (columnPosition)
-
-        left = portionAnalysis['left'][dateId] + correctLeft
-        top = portionAnalysis['top'][dateId] + correctTop
-        height = portionAnalysis['height'][dateId]
-        width = portionAnalysis['width'][dateId]
-
-        return dateId, left, top, height, width
 
     def getKChannel(self, img):
         # Conversion to CMYK (just the K channel):
@@ -441,37 +515,9 @@ class TextBot():
         else:
             print("Failed to prepare analysis, img is None")
 
-    def getRoomAvailability(self, roomName):
 
-        roomId = self.getRoomId(roomName)
 
-        roomBoundingBox = self.roomSlot[roomId][1]
 
-        roomImg = self.cropRoomSlotFromImg(self.calendarImg, roomBoundingBox)
-
-        roomAvailability = []
-
-        for i in range(0, len(self.timeSlot)):
-            timeSlotName = self.timeSlot[i][0]
-
-            status = self.getTimeSlotStatus(roomImg, timeSlotName)
-
-            roomAvailability.append({'timeSlot':timeSlotName, 'status': status})
-
-        return roomAvailability
-
-    def generateRoomsName(self):
-
-        roomName = []
-
-        for i in range(0, len(self.roomNameAnalysis['text'])):
-
-            text = self.roomNameAnalysis['text'][i]
-
-            if self.isStringARoom(text):
-                roomName.append(text)
-
-        return roomName
 
     def visualizeRoomsAvailability(self):
         # To visualize the result of the execution
@@ -544,18 +590,7 @@ class TextBot():
 
         return roomTop
 
-    def getAllRoomsAvailability(self):
 
-        roomsAvailability = {}
-
-        for room in self.roomsName:
-
-            availability = self.getRoomAvailability(room)
-
-            roomsAvailability[room] = availability
-
-
-        return roomsAvailability
 
     def findIdOfDateWithYear(self, texts):
         id = 0
@@ -800,25 +835,7 @@ class TextBot():
 
         return cropImg
 
-    def generateRoomSlot(self):
 
-        # Get the coordinates of all the rooms in the present screenCapture
-        roomsSlot = []
-
-        for i in range(0, len(self.roomNameAnalysis['text'])):
-
-            if self.roomNameAnalysis['conf'][i] >= 30:
-
-                text = self.roomNameAnalysis['text'][i]
-
-                if self.isStringARoom(text):
-
-                    boundingBox = self.getTextBoundingBox(self.roomNameAnalysis, i)
-                    slot = [text, boundingBox]
-
-                    roomsSlot.append(slot)
-
-        return  roomsSlot
 
     def findIdOfDate(self, texts):
         # Find the id of the date in the analyzedResults dict
