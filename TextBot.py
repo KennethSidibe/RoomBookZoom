@@ -618,6 +618,9 @@ class TextBot():
         elif self.isSecondHalfReservable(timeSlotStatusImg):
             return SECOND_HALF_INDICATOR
 
+        else:
+            return CLOSED_INDICATOR
+
     def isTimeSlotFull(self, timeSlotImg):
 
         if self.arePixelsBlue(timeSlotImg):
