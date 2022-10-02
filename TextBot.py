@@ -409,7 +409,7 @@ class TextBot():
 
         return cropImg
 
-        def preprocessDateImg(self, img):
+    def preprocessDateImg(self, img):
             # Preprocess img to upgrade text analysis result for current img capture
 
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -713,7 +713,7 @@ class TextBot():
 
         return 0, 0
 
-        def cropPortionsLeftAndRightTimeslot(self, timeSlotStatusImg):
+    def cropPortionsLeftAndRightTimeslot(self, timeSlotStatusImg):
 
             width = timeSlotStatusImg.shape[1]
             height = timeSlotStatusImg.shape[0]
