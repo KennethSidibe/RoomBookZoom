@@ -233,9 +233,110 @@ class TextBot():
         return roomName
 
 
+    # Image processing functions
+
+    def portionImageByHeight(self, img, currTop=0, heightDivisor=0):
+
+        if heightDivisor >= 0:
+            divisor = heightDivisor
+
+        else:
+            divisor = PORTION_HEIGHT_DIVISOR
+
+        portionHeight = int((img.shape[0]) / divisor)
+        imgWidth = img.shape[1]
+
+        imgTop = portionHeight
+        imgHeight = currTop + portionHeight
+
+        imgPortion = img[currTop:imgHeight, 0:imgWidth]
+
+        return (imgPortion, imgHeight)
+
+    def portionImageByWidth(self, img, currLeft=0, widthDivisor=0):
+
+        if widthDivisor >= 0:
+            divisor = widthDivisor
+
+        else:
+            divisor = PORTION_WIDTH_DIVISOR
+
+        portionWidth = int((img.shape[1]) / divisor)
+        imgHeight = img.shape[1]
+
+        imgWidth = currLeft + portionWidth
+
+        imgPortion = img[0:imgHeight, currLeft:imgWidth]
+
+        return (imgPortion, imgWidth)
+
+    def portionImageByArea(self, img, portionHeightCorrector=0, portionWidthCorrector=0):
+
+        rowsImg = []
+        areaImg = []
+
+        rowDivision = PORTION_HEIGHT_DIVISOR + portionHeightCorrector
+        colDivision = PORTION_WIDTH_DIVISOR - portionWidthCorrector
+
+        for i in range(0, rowDivision):
+
+            rowsImg = self.portionToRowsImg(img, rowDivision)
+
+        if colDivision <= 0:
+            colDivision = 2
+
+        for rowImg in rowsImg:
+
+            if colDivision > 1:
+                columnsImg = self.portionToColumnsImg(rowImg, colDivision)
+
+                areaImg.append(columnsImg)
+
+        return areaImg
+
+    def portionToColumnsImg(self, rowImg, portionWidthCorrector=0):
+
+        currLeft = 0
+
+        columnPortionsImg = []
+
+        colDivision = portionWidthCorrector
+
+        if colDivision <= 0:
+            colDivision = 2
+
+
+        for i in range(0, colDivision):
+
+            areaImg, currLeft = self.portionImageByWidth(rowImg, currLeft, colDivision)
+
+            columnPortionsImg.append(areaImg)
+
+        return columnPortionsImg
+
+    def portionToRowsImg(self, screencaptureImg, portionHeightCorrector=0):
+
+        currTop = 0
+
+        rowPortionsImg =  []
+
+        rowDivision = portionHeightCorrector
+
+        if rowDivision <=  0:
+            rowDivision = 2
+
+
+        for i in range(0, rowDivision):
+
+            rowImg, currTop = self.portionImageByHeight(screencaptureImg, currTop, rowDivision)
+
+            rowPortionsImg.append(rowImg)
+
+        return rowPortionsImg
+
+
 
     # Cropping functions
-
 
     def findCropDateCoordinateByHeight(self, screencaptureImg):
 
@@ -341,120 +442,9 @@ class TextBot():
 
         return 0, 0
 
-    def portionImageByHeight(self, img, currTop=0, heightDivisor=0):
-
-        if heightDivisor >= 0:
-            divisor = heightDivisor
-
-        else:
-            divisor = PORTION_HEIGHT_DIVISOR
-
-        portionHeight = int((img.shape[0]) / divisor)
-        imgWidth = img.shape[1]
-
-        imgTop = portionHeight
-        imgHeight = currTop + portionHeight
-
-        imgPortion = img[currTop:imgHeight, 0:imgWidth]
-
-        return (imgPortion, imgHeight)
-
-    def portionImageByWidth(self, img, currLeft=0, widthDivisor=0):
-
-        if widthDivisor >= 0:
-            divisor = widthDivisor
-
-        else:
-            divisor = PORTION_WIDTH_DIVISOR
-
-        portionWidth = int((img.shape[1]) / divisor)
-        imgHeight = img.shape[1]
-
-        imgWidth = currLeft + portionWidth
-
-        imgPortion = img[0:imgHeight, currLeft:imgWidth]
-
-        return (imgPortion, imgWidth)
-
-    def portionImageByArea(self, img, portionHeightCorrector=0, portionWidthCorrector=0):
-
-        rowsImg = []
-        areaImg = []
-
-        rowDivision = PORTION_HEIGHT_DIVISOR + portionHeightCorrector
-        colDivision = PORTION_WIDTH_DIVISOR - portionWidthCorrector
-
-        for i in range(0, rowDivision):
-
-            rowsImg = self.portionToRowsImg(img, rowDivision)
-
-        if colDivision <= 0:
-            colDivision = 2
-
-        for rowImg in rowsImg:
-
-            if colDivision > 1:
-                columnsImg = self.portionToColumnsImg(rowImg, colDivision)
-
-                areaImg.append(columnsImg)
-
-        return areaImg
-
-    def portionToColumnsImg(self, rowImg, portionWidthCorrector=0):
-
-        currLeft = 0
-
-        columnPortionsImg = []
-
-        colDivision = portionWidthCorrector
-
-        if colDivision <= 0:
-            colDivision = 2
-
-
-        for i in range(0, colDivision):
-
-            areaImg, currLeft = self.portionImageByWidth(rowImg, currLeft, colDivision)
-
-            columnPortionsImg.append(areaImg)
-
-        return columnPortionsImg
-
-    def portionToRowsImg(self, screencaptureImg, portionHeightCorrector=0):
-
-        currTop = 0
-
-        rowPortionsImg =  []
-
-        rowDivision = portionHeightCorrector
-
-        if rowDivision <=  0:
-            rowDivision = 2
-
-
-        for i in range(0, rowDivision):
-
-            rowImg, currTop = self.portionImageByHeight(screencaptureImg, currTop, rowDivision)
-
-            rowPortionsImg.append(rowImg)
-
-        return rowPortionsImg
 
 
 
-    def getKChannel(self, img):
-        # Conversion to CMYK (just the K channel):
-
-        # Convert to float and divide by 255:
-        imgFloat = img.astype(np.float) / 255.
-
-        # Calculate channel K:
-        kChannel = 1 - np.max(imgFloat, axis=2)
-
-        # Convert back to uint 8:
-        kChannel = (255 * kChannel).astype(np.uint8)
-
-        return kChannel
 
     def preprocessDateImg(self, img):
 
@@ -605,7 +595,6 @@ class TextBot():
             return None
 
         return id
-
 
     def getTimeSlotStatus(self, timeSlotImg, timeSlotName):
         # Get the status from the requested TimeSlot Img
