@@ -212,3 +212,24 @@ class BookBot():
         print(rooms)
 
         driver.quit()
+
+    def find2HoursSlot(self, roomAvailability):
+
+        twoHoursSlot = []
+
+        for i  in range(0, len(roomAvailability)-1):
+
+            slot = roomAvailability[i]['timeSlot']
+            slotNext = roomAvailability[i+1]['timeSlot']
+            status = roomAvailability[i]['status']
+            statusNext = roomAvailability[i+1]['status']
+
+            if status == FULLY_RESERVABLE_INDICATOR and statusNext == FULLY_RESERVABLE_INDICATOR:
+
+                firstSlot = {'timeSlot':slot, 'id':i}
+                secondSlot = {'timeSlot':slot, 'id':i}
+
+                twoHoursSlot.append( { 'firstSlot':firstSlot, 'secondSlot':secondSlot } )
+
+        return  twoHoursSlot
+
