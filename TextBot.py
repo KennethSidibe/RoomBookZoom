@@ -600,7 +600,7 @@ class TextBot():
         elif availabilityIndicator == SECOND_HALF_INDICATOR:
             return 'SFREE'
         else:
-            return 'UND'
+            return 'CLOS'
 
     def showAllImgPortions(self, imgPortions):
 
