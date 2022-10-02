@@ -18,62 +18,6 @@ class TextBot():
     roomsAvailability = None
     dateCoordinate = None
 
-    def isStringARoom(self, string):
-        # check if provided string is a reservable room by the system
-        # Like FTX-514
-
-        if len(string) > 10 or len(string) < 7:
-            return False
-
-        rooms = {
-                'CRX' : ['CRX-C520', 'CRX-C521', 'CRX-C522', 'CRX-C523', 'CRX-C524',
-                         'CRX-C525', 'CRX-C526', 'CRX-C527', 'CRX-C528','CRX-C529',
-                         'CRX-C541', 'CRX-C542', 'CRX-C543', 'CRX-C544', 'CRX-C545'],
-
-                 'FTX' : ['FTX-514', 'FTX-515', 'FTX-525A', 'FTX-525B',
-                  'FTX-525C', 'FTX-525D', 'FTX-525G', 'FTX-525H', 'FTX-525J'],
-
-                 'MRT' : ['MRT-404', 'MRT-405', 'MRT-406', 'MRT-407', 'MRT-408', 'MRT-409',
-                          'MRT-410', 'MRT-411', 'MRT-412','MRT-415', 'MRT-417', 'MRT-418'],
-
-                 'RGN' : ['RGN-1020J', 'RGN-1020K', 'RGN-1020L',
-                          'RGN-1020M', 'RGN-1020N', 'RGN-1020P']
-                 }
-
-        chars = []
-        Buildings = rooms.keys()
-
-        for i in range(0, 3):
-            chars.append(string[i])
-
-        charFromString = ''.join(chars)
-
-        if not (charFromString in rooms):
-            return False
-
-        roomsForBuilding = rooms[charFromString]
-
-        if string in roomsForBuilding:
-            return True
-
-        else:
-            return False
-
-    def isStringATimeSlot(self, string):
-
-        timeSlots = ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00',
-                    '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00',
-                    '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
-                    ]
-
-        for timeSlot in timeSlots:
-
-            if string == timeSlot:
-
-                return True
-
-        return False
-
     # Main methods
 
     def analyze(self, filePath):
@@ -232,6 +176,65 @@ class TextBot():
 
         return roomName
 
+    def getTimeSlotStatus(self, timeSlotImg, timeSlotName):
+        # Get the status from the requested TimeSlot Img
+
+        id = self.getTimeSlotId(timeSlotName)
+        timeSlotBoundingBox = self.timeSlot[id][1]
+
+        timeSlotStatusImg = self.cropImgWithBoundingBox(timeSlotImg, timeSlotBoundingBox)
+
+        if self.isTimeSlotFull(timeSlotStatusImg):
+            return FULLY_BOOK_INDICATOR
+
+        elif self.isTimeSlotFullyReservable(timeSlotStatusImg):
+            return FULLY_RESERVABLE_INDICATOR
+
+        elif self.isFirstHalfReservable(timeSlotStatusImg):
+            return FIRST_HALF_INDICATOR
+
+        elif self.isSecondHalfReservable(timeSlotStatusImg):
+            return SECOND_HALF_INDICATOR
+
+        else:
+            return CLOSED_INDICATOR
+
+    def getTimeSlot(self):
+
+        # Get the timeSlot from the current screencapture with their exact coordinates
+        imgWidth = self.calendarImg.shape[1]
+
+        pixelOffset = 15
+
+        boxLeft = self.dateCoordinate[0]
+        boxTop = self.dateCoordinate[1]
+        boxHeight = self.dateCoordinate[2]
+
+        timeSlot = []
+
+        availableTimeImg = self.calendarImg[0:boxHeight+boxTop+pixelOffset, 0:imgWidth]
+
+        processImg = self.preprocessTimeSlotImg(availableTimeImg)
+
+        timeAnalyzed = pytesseract.image_to_data(processImg, output_type=Output.DICT)
+
+        for i in range(0, len(timeAnalyzed['text'])):
+
+            confidenceLevel = timeAnalyzed['conf'][i]
+            text = timeAnalyzed['text'][i]
+
+            if confidenceLevel >= 30 and self.isStringATimeSlot(text):
+
+                time = text
+
+                boundBox = self.getTextBoundingBox(timeAnalyzed, i)
+                self.addWidthOffsetToBoundingBox(boundBox)
+
+                timeSlot.append((time, boundBox))
+
+        return timeSlot
+
+
 
     # Image processing functions
 
@@ -334,133 +337,6 @@ class TextBot():
 
         return rowPortionsImg
 
-
-
-    # Cropping functions
-
-    def findCropDateCoordinateByHeight(self, screencaptureImg):
-
-        dateId = -1
-
-        imgPortions = self.getAllImagePortion(screencaptureImg)
-
-        for i in range(0, len(imgPortions)):
-
-            imgPortion = imgPortions[i]
-
-            dateId, left, top = self.analyzePortion(imgPortion)
-
-            if dateId != -1:
-
-                imgPortionHeight = imgPortion.shape[0]
-                correctedTop = (i) * imgPortionHeight + top
-
-                return left, correctedTop
-
-        return 0, 0
-
-    def findCropDateCoordinateByArea(self, screencaptureImg):
-
-        dateId = -1
-
-        imgPortions = self.portionImageByArea(screencaptureImg)
-
-        dateId, left, top, height, width = self.analyzeAllImgPortions(imgPortions)
-
-        if dateId != -1:
-
-            return left, top, height, width
-
-        # if we could not find the date id, we will narrow our search
-        dateId, left, top, height, width = self.doNarrowSearch(screencaptureImg)
-
-        if dateId != -1:
-            return left, top, height, width
-
-        return  0, 0, 0, 0
-
-    def doNarrowSearch(self, screencaptureImg):
-
-        dateId = -1
-        widthCorrector = 0
-        heightCorrector = 0
-
-        for i in range(0, NARROW_SEARCH_MAX_ITERATION):
-
-            dateId, left, top, widthCorrector, heightCorrector, height, width\
-                = self.NarrowSearchOfCropDateCoordinate(screencaptureImg, widthCorrector, heightCorrector)
-
-            if dateId != -1:
-
-                return dateId, left, top, height, width
-
-        return -1, 0, 0, 0, 0
-
-    def showAllImgPortions(self, imgPortions):
-
-        for row in imgPortions:
-
-            for img in row:
-
-                self.showImg(img)
-
-    def NarrowSearchOfCropDateCoordinate(self, screenCaptureImg, widthCorrector=0, heightCorrector=0):
-
-        portionWidthCorrector = PORTION_WIDTH_CORRECTOR
-        portionHeightCorrector = PORTION_HEIGHT_CORRECTOR + heightCorrector
-
-        dateId = -1
-
-        imgPortions = self.portionImageByArea(screenCaptureImg, portionHeightCorrector, portionWidthCorrector)
-
-        dateId, left, top, width, height = self.analyzeAllImgPortions(imgPortions)
-
-        if dateId != -1:
-
-            return dateId, left, top, 0, 0, height, width
-
-        return -1, 0, 0, 2, 2, 0, 0
-
-    def findCropDateCoordinateByWidth(self, screencaptureImg):
-
-        dateId = -1
-
-        imgPortions = self.getAllImagePortion(screencaptureImg)
-
-        for i in range(0, len(imgPortions)):
-
-            imgPortion = imgPortions[i]
-
-            dateId, left, top = self.analyzePortion(imgPortion)
-
-            if dateId != -1:
-
-                imgPortionHeight = imgPortion.shape[0]
-                correctedTop = (i) * imgPortionHeight + top
-
-                return left, correctedTop
-
-        return 0, 0
-
-
-
-
-
-    def preprocessDateImg(self, img):
-
-        # Preprocess img to upgrade text analysis result for current img capture
-
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-        invert = cv2.bitwise_not(gray)
-
-        thresh = 90
-        max = 255
-
-        th, threshImg = cv2.threshold(invert, thresh, max, cv2.THRESH_BINARY_INV)
-
-        return threshImg
-
     def preprocessTimeSlotImg(self, img):
         # Preprocess img to upgrade text analysis result for current img timeslot
 
@@ -474,6 +350,99 @@ class TextBot():
         th, threshImg = cv2.threshold(invert, thresh, max, cv2.THRESH_BINARY_INV)
 
         return threshImg
+
+    def addWidthOffsetToBoundingBox(self, boundBox):
+
+        boundBox['x']['width'] += boundBoxPixelOffset
+
+
+
+    # Cropping functions
+
+    def showAllImgPortions(self, imgPortions):
+
+        for row in imgPortions:
+
+            for img in row:
+
+                self.showImg(img)
+
+    def cropCalendarImage(self, screencaptureImg):
+        # Crop the calendar from the screencapture
+
+        boxLeft, boxTop, boxHeight, boxWidth = self.findCropDateCoordinateByArea(screencaptureImg)
+
+        self.dateCoordinate = (boxLeft, boxTop, boxHeight, boxWidth)
+
+        imgWidth = screencaptureImg.shape[1]
+        imgHeight = screencaptureImg.shape[0]
+
+        pixelOffset = 15
+
+        cropImg = screencaptureImg[boxTop - pixelOffset:imgHeight, boxLeft - pixelOffset:imgWidth]
+
+        return cropImg
+
+        def preprocessDateImg(self, img):
+            # Preprocess img to upgrade text analysis result for current img capture
+
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+            invert = cv2.bitwise_not(gray)
+
+            thresh = 90
+            max = 255
+
+            th, threshImg = cv2.threshold(invert, thresh, max, cv2.THRESH_BINARY_INV)
+
+            return threshImg
+
+    def cropImgWithCoordinates(self, img, x, y, width, height):
+
+        width = int(width)
+        height = int(height)
+
+        cropImg = img[y:y + height, x:x + width]
+
+        return cropImg
+
+    def cropRoomName(self, img):
+
+        pixelOffset = 10
+
+        imgHeight = img.shape[0]
+        left = self.dateCoordinate[0]
+        top = self.dateCoordinate[1]
+        width = self.dateCoordinate[2]
+        height = self.dateCoordinate[3]
+
+        cropImg = img[0:imgHeight, 0:left + width]
+
+        return cropImg
+
+    def cropRoomSlotFromImg(self, img, boundingBox):
+        # Crop room slot from img with the provided bounding box
+
+        imgWidth = img.shape[1]
+        top = boundingBox['y']['top']
+        height = boundingBox['y']['height']
+        pixelOffset = 20
+
+        cropImg = img[top - pixelOffset:top + height + pixelOffset, 0:imgWidth]
+
+        return cropImg
+
+    def cropImgWithBoundingBox(self, img, boundingBox):
+
+        # Crop room slot from img with the provided bounding box
+        top = boundingBox['y']['top']
+        height = boundingBox['y']['height']
+        left = boundingBox['x']['left']
+        width = boundingBox['x']['width']
+
+        cropImg = img[top:top + height, left: left + width]
+
+        return cropImg
 
     def prepareRoomAnalysis(self):
         # Generate all the required attributes for the functioning of getRoomAvailability Method
@@ -507,18 +476,17 @@ class TextBot():
 
 
 
-
+    # Visualize result onto image
 
     def visualizeRoomsAvailability(self):
-        # To visualize the result of the execution
+            # To visualize the result of the execution
 
-        availabilityImg = np.array([])
+            availabilityImg = np.array([])
 
-        for room in self.roomsName:
+            for room in self.roomsName:
+                availabilityImg = self.addAvailabilityTextToRoomSlotImg(room, availabilityImg)
 
-            availabilityImg = self.addAvailabilityTextToRoomSlotImg(room, availabilityImg)
-
-        return availabilityImg
+            return availabilityImg
 
     def addAvailabilityTextToRoomSlotImg(self, roomName, roomImg=None):
         # Add availability text to provided roomName
@@ -540,7 +508,6 @@ class TextBot():
         pixelOffset = 10
 
         for i in range(0, len(self.timeSlot)):
-
             slot = self.timeSlot[i][0]
             availability = self.roomsAvailability[roomName][i]['status']
 
@@ -551,10 +518,79 @@ class TextBot():
             text = self.setTextToAdd(availability)
 
             availabilityTextImg = cv2.putText(availabilityTextImg, text, org, font,
-                              fontScale, color,
-                              thickness, cv2.LINE_AA)
+                                              fontScale, color,
+                                              thickness, cv2.LINE_AA)
 
         return availabilityTextImg
+
+    def addTimeSlotTextToImg(self, img, timeSlot):
+
+        pixelOffset = 10
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        fontScale = 1
+        color = (255, 0, 0)
+        thickness = 2
+
+        for i in range(0, len(self.timeSlot)):
+            text = timeSlot[i][0]
+
+            orgX = timeSlot[i][1]['x']['left']
+            orgY = timeSlot[i][1]['y']['top'] + pixelOffset
+
+            org = (orgX, orgY)
+
+            imgWithTimeSlot = cv2.putText(img, text, org, font,
+                                          fontScale, color,
+                                          thickness, cv2.LINE_AA)
+
+        return imgWithTimeSlot
+
+    def drawBoxAroundTimeSlot(self, img, timeSlot):
+
+        for i in range(0, len(self.timeSlot)):
+            left = timeSlot[i][1]['x']['left']
+            top = timeSlot[i][1]['y']['top']
+            width = timeSlot[i][1]['x']['width']
+            height = timeSlot[i][1]['y']['height']
+
+            imgWithBoundingBox = cv2.rectangle(img,
+                                               (left, top),
+                                               (left + width, top + height),
+                                               (0, 0, 255),
+                                               2)
+
+        return imgWithBoundingBox
+
+    def drawBoxAroundText(self, id, analyzedResults, img):
+        # Draw a box around the text in the current image with the id provided
+
+        # getting coordinates of the box
+        x = analyzedResults['left'][id]
+        y = analyzedResults['top'][id]
+
+        # get width and height of text box
+        w = analyzedResults['width'][id]
+        h = analyzedResults['height'][id]
+
+        # draw box around word
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+        cv2.imshow('test', img)
+
+        cv2.setWindowProperty('test', cv2.WND_PROP_TOPMOST, 1)
+
+        cv2.waitKey()
+
+    def drawAroundBoundingBox(self, img, boundBox):
+        # Draw a box with the provided bounding box
+
+        top = boundBox['y']['top']
+        left = boundBox['x']['left']
+        width = boundBox['x']['width']
+        height = boundBox['y']['height']
+
+        cv2.rectangle(img, (left, top), (left + width, top + height), (0, 0, 255), 2)
 
     def setTextToAdd(self, availabilityIndicator):
         # Returns the text to add respective to the indicator
@@ -570,6 +606,113 @@ class TextBot():
         else:
             return 'UND'
 
+
+
+
+    # Search methods
+
+        def findCropDateCoordinateByHeight(self, screencaptureImg):
+
+            dateId = -1
+
+            imgPortions = self.getAllImagePortion(screencaptureImg)
+
+            for i in range(0, len(imgPortions)):
+
+                imgPortion = imgPortions[i]
+
+                dateId, left, top = self.analyzePortion(imgPortion)
+
+                if dateId != -1:
+                    imgPortionHeight = imgPortion.shape[0]
+                    correctedTop = (i) * imgPortionHeight + top
+
+                    return left, correctedTop
+
+            return 0, 0
+
+    def findCropDateCoordinateByArea(self, screencaptureImg):
+
+        dateId = -1
+
+        imgPortions = self.portionImageByArea(screencaptureImg)
+
+        dateId, left, top, height, width = self.analyzeAllImgPortions(imgPortions)
+
+        if dateId != -1:
+            return left, top, height, width
+
+        # if we could not find the date id, we will narrow our search
+        dateId, left, top, height, width = self.doNarrowSearch(screencaptureImg)
+
+        if dateId != -1:
+            return left, top, height, width
+
+        return 0, 0, 0, 0
+
+    def doNarrowSearch(self, screencaptureImg):
+
+        dateId = -1
+        widthCorrector = 0
+        heightCorrector = 0
+
+        for i in range(0, NARROW_SEARCH_MAX_ITERATION):
+
+            dateId, left, top, widthCorrector, heightCorrector, height, width \
+                = self.NarrowSearchOfCropDateCoordinate(screencaptureImg, widthCorrector, heightCorrector)
+
+            if dateId != -1:
+                return dateId, left, top, height, width
+
+        return -1, 0, 0, 0, 0
+
+    def NarrowSearchOfCropDateCoordinate(self, screenCaptureImg, widthCorrector=0, heightCorrector=0):
+
+        portionWidthCorrector = PORTION_WIDTH_CORRECTOR
+        portionHeightCorrector = PORTION_HEIGHT_CORRECTOR + heightCorrector
+
+        dateId = -1
+
+        imgPortions = self.portionImageByArea(screenCaptureImg, portionHeightCorrector, portionWidthCorrector)
+
+        dateId, left, top, width, height = self.analyzeAllImgPortions(imgPortions)
+
+        if dateId != -1:
+            return dateId, left, top, 0, 0, height, width
+
+        return -1, 0, 0, 2, 2, 0, 0
+
+    def findCropDateCoordinateByWidth(self, screencaptureImg):
+
+        dateId = -1
+
+        imgPortions = self.getAllImagePortion(screencaptureImg)
+
+        for i in range(0, len(imgPortions)):
+
+            imgPortion = imgPortions[i]
+
+            dateId, left, top = self.analyzePortion(imgPortion)
+
+            if dateId != -1:
+                imgPortionHeight = imgPortion.shape[0]
+                correctedTop = (i) * imgPortionHeight + top
+
+                return left, correctedTop
+
+        return 0, 0
+
+        def cropPortionsLeftAndRightTimeslot(self, timeSlotStatusImg):
+
+            width = timeSlotStatusImg.shape[1]
+            height = timeSlotStatusImg.shape[0]
+
+            leftPortion = self.cropImgWithCoordinates(timeSlotStatusImg, 5, 5, 20, height - 3)
+
+            rightPortion = self.cropImgWithCoordinates(timeSlotStatusImg, width - 20, 5, width, height - 3)
+
+            return (leftPortion, rightPortion)
+
     def getRoomYCoord(self, roomName, roomId=None):
         # Returns the room y coordinate
 
@@ -579,8 +722,6 @@ class TextBot():
         roomTop = self.roomSlot[roomId][1]['y']['top']
 
         return roomTop
-
-
 
     def findIdOfDateWithYear(self, texts):
         id = 0
@@ -596,28 +737,66 @@ class TextBot():
 
         return id
 
-    def getTimeSlotStatus(self, timeSlotImg, timeSlotName):
-        # Get the status from the requested TimeSlot Img
+    def getTimeSlotId(self, timeSlotName):
+        # Get the id of the timeslot requested
 
-        id = self.getTimeSlotId(timeSlotName)
-        timeSlotBoundingBox = self.timeSlot[id][1]
+        for i in range(0, len(self.timeSlot)):
 
-        timeSlotStatusImg = self.cropImgWithBoundingBox(timeSlotImg, timeSlotBoundingBox)
+            if self.timeSlot[i][0] == timeSlotName:
+                return i
 
-        if self.isTimeSlotFull(timeSlotStatusImg):
-            return FULLY_BOOK_INDICATOR
+    def findIdOfDate(self, texts):
+        # Find the id of the date in the analyzedResults dict
 
-        elif self.isTimeSlotFullyReservable(timeSlotStatusImg):
-            return FULLY_RESERVABLE_INDICATOR
+        # This id will be used to crop our the schedule screen capture image
+        id = 0
 
-        elif self.isFirstHalfReservable(timeSlotStatusImg):
-            return FIRST_HALF_INDICATOR
+        for i in range(0, len(texts)):
 
-        elif self.isSecondHalfReservable(timeSlotStatusImg):
-            return SECOND_HALF_INDICATOR
+            if self.isWeekday(texts[i]):
+                id = i
+                break
 
-        else:
-            return CLOSED_INDICATOR
+        if not self.isWeekday(texts[id]):
+            return None
+
+        return id
+
+    def getTextBoundingBox(self, analyzedResults, id):
+        # Get bounding box of text with the provided id
+
+        boxLeft = analyzedResults['left'][id]
+        boxTop = analyzedResults['top'][id]
+        boxHeight = analyzedResults['height'][id]
+        boxWidth = analyzedResults['width'][id]
+
+        boundingBox = {'x': {'left': boxLeft, 'width': boxWidth},
+                       'y': {'top': boxTop, 'height': boxHeight}
+                       }
+
+        return boundingBox
+
+    def getRoomId(self, roomName):
+        # get the room id from the roomSlot Array
+
+        for i in range(0, len(self.roomSlot)) :
+
+            if roomName == self.roomSlot[i][0]:
+
+                return i
+
+    def showImg(self, img):
+        # Show image with wait statement
+
+        cv2.imshow('window', img)
+
+        cv2.setWindowProperty('window', cv2.WND_PROP_TOPMOST, 1)
+
+        cv2.waitKey()
+
+
+
+    # Verify Data methods
 
     def isTimeSlotFull(self, timeSlotImg):
 
@@ -659,17 +838,6 @@ class TextBot():
             return True
 
         return False
-
-    def cropPortionsLeftAndRightTimeslot(self, timeSlotStatusImg):
-
-        width = timeSlotStatusImg.shape[1]
-        height = timeSlotStatusImg.shape[0]
-
-        leftPortion = self.cropImgWithCoordinates(timeSlotStatusImg, 5, 5, 20, height-3)
-
-        rightPortion = self.cropImgWithCoordinates(timeSlotStatusImg, width-20, 5, width, height-3)
-
-        return (leftPortion, rightPortion)
 
     def arePixelsBlue(self, img):
 
@@ -717,240 +885,6 @@ class TextBot():
 
             return False
 
-    def cropImgWithCoordinates(self, img, x, y, width, height):
-
-        width = int(width)
-        height = int(height)
-
-        cropImg = img[y:y+height, x:x+width]
-
-        return cropImg
-
-    def getTimeSlotId(self, timeSlotName):
-        # Get the id of the timeslot requested
-
-        for i in range(0, len(self.timeSlot)):
-
-            if self.timeSlot[i][0] == timeSlotName:
-                return i
-
-    def addTimeSlotTextToImg(self, img, timeSlot):
-
-        pixelOffset = 10
-
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        fontScale = 1
-        color = (255, 0, 0)
-        thickness = 2
-
-        for i in range(0, len(self.timeSlot)):
-
-            text = timeSlot[i][0]
-
-            orgX = timeSlot[i][1]['x']['left']
-            orgY = timeSlot[i][1]['y']['top'] + pixelOffset
-
-            org = (orgX, orgY)
-
-            imgWithTimeSlot = cv2.putText(img, text, org, font,
-                              fontScale, color,
-                              thickness, cv2.LINE_AA)
-
-        return imgWithTimeSlot
-
-    def drawBoxAroundTimeSlot(self, img, timeSlot):
-
-        for i in range(0, len(self.timeSlot)):
-
-            left = timeSlot[i][1]['x']['left']
-            top = timeSlot[i][1]['y']['top']
-            width = timeSlot[i][1]['x']['width']
-            height = timeSlot[i][1]['y']['height']
-
-            imgWithBoundingBox = cv2.rectangle(img,
-                                               (left, top),
-                                               (left + width, top + height),
-                                               (0, 0, 255),
-                                               2)
-
-        return imgWithBoundingBox
-
-    def getRoomId(self, roomName):
-        # get the room id from the roomSlot Array
-
-        for i in range(0, len(self.roomSlot)) :
-
-            if roomName == self.roomSlot[i][0]:
-
-                return i
-
-    def cropRoomName(self, img):
-
-        pixelOffset = 10
-
-        imgHeight = img.shape[0]
-        left = self.dateCoordinate[0]
-        top = self.dateCoordinate[1]
-        width = self.dateCoordinate[2]
-        height = self.dateCoordinate[3]
-
-        cropImg = img[0:imgHeight, 0:left + width]
-
-        return cropImg
-
-
-
-    def findIdOfDate(self, texts):
-        # Find the id of the date in the analyzedResults dict
-
-        # This id will be used to crop our the schedule screen capture image
-        id = 0
-
-        for i in range(0, len(texts)):
-
-            if self.isWeekday(texts[i]):
-
-                id = i
-                break
-
-        if not self.isWeekday(texts[id]):
-
-            return None
-
-        return id
-
-    def drawBoxAroundText(self, id, analyzedResults, img):
-        # Draw a box around the text in the current image with the id provided
-
-        # getting coordinates of the box
-        x = analyzedResults['left'][id]
-        y = analyzedResults['top'][id]
-
-        # get width and height of text box
-        w = analyzedResults['width'][id]
-        h = analyzedResults['height'][id]
-
-        # draw box around word
-        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-        cv2.imshow('test', img)
-
-        cv2.setWindowProperty('test', cv2.WND_PROP_TOPMOST, 1)
-
-        cv2.waitKey()
-
-    def drawAroundBoundingBox(self, img, boundBox):
-        # Draw a box with the provided bounding box
-
-        top = boundBox['y']['top']
-        left = boundBox['x']['left']
-        width = boundBox['x']['width']
-        height = boundBox['y']['height']
-
-        cv2.rectangle(img, (left, top), (left + width, top + height), (0, 0, 255), 2)
-
-    def getTimeSlot(self):
-
-        # Get the timeSlot from the current screencapture with their exact coordinates
-        imgWidth = self.calendarImg.shape[1]
-
-        pixelOffset = 15
-
-        boxLeft = self.dateCoordinate[0]
-        boxTop = self.dateCoordinate[1]
-        boxHeight = self.dateCoordinate[2]
-
-        timeSlot = []
-
-        availableTimeImg = self.calendarImg[0:boxHeight+boxTop+pixelOffset, 0:imgWidth]
-
-        processImg = self.preprocessTimeSlotImg(availableTimeImg)
-
-        timeAnalyzed = pytesseract.image_to_data(processImg, output_type=Output.DICT)
-
-        for i in range(0, len(timeAnalyzed['text'])):
-
-            confidenceLevel = timeAnalyzed['conf'][i]
-            text = timeAnalyzed['text'][i]
-
-            if confidenceLevel >= 30 and self.isStringATimeSlot(text):
-
-                time = text
-
-                boundBox = self.getTextBoundingBox(timeAnalyzed, i)
-                self.addWidthOffsetToBoundingBox(boundBox)
-
-                timeSlot.append((time, boundBox))
-
-        return timeSlot
-
-    def addWidthOffsetToBoundingBox(self, boundBox):
-
-        boundBox['x']['width'] += boundBoxPixelOffset
-
-    def cropRoomSlotFromImg(self, img, boundingBox):
-        # Crop room slot from img with the provided bounding box
-
-        imgWidth = img.shape[1]
-        top = boundingBox['y']['top']
-        height = boundingBox['y']['height']
-        pixelOffset = 20
-
-        cropImg = img[top-pixelOffset:top+height+pixelOffset, 0:imgWidth]
-
-        return cropImg
-
-    def cropImgWithBoundingBox(self, img, boundingBox):
-
-        # Crop room slot from img with the provided bounding box
-        top = boundingBox['y']['top']
-        height = boundingBox['y']['height']
-        left = boundingBox['x']['left']
-        width = boundingBox['x']['width']
-
-        cropImg = img[top:top + height, left: left + width]
-
-        return cropImg
-
-    def cropCalendarImage(self, screencaptureImg):
-        # Crop the calendar from the screencapture
-
-        boxLeft, boxTop, boxHeight, boxWidth = self.findCropDateCoordinateByArea(screencaptureImg)
-
-        self.dateCoordinate = (boxLeft, boxTop, boxHeight, boxWidth)
-
-        imgWidth = screencaptureImg.shape[1]
-        imgHeight = screencaptureImg.shape[0]
-
-        pixelOffset = 15
-
-        cropImg = screencaptureImg[boxTop - pixelOffset:imgHeight , boxLeft-pixelOffset:imgWidth]
-
-        return cropImg
-
-    def getTextBoundingBox(self, analyzedResults, id):
-        # Get bounding box of text with the provided id
-
-        boxLeft = analyzedResults['left'][id]
-        boxTop = analyzedResults['top'][id]
-        boxHeight = analyzedResults['height'][id]
-        boxWidth = analyzedResults['width'][id]
-
-        boundingBox = {'x':{'left':boxLeft, 'width':boxWidth},
-                       'y':{'top':boxTop, 'height':boxHeight}
-                       }
-
-        return boundingBox
-
-    def showImg(self, img):
-        # Show image with wait statement
-
-        cv2.imshow('window', img)
-
-        cv2.setWindowProperty('window', cv2.WND_PROP_TOPMOST, 1)
-
-        cv2.waitKey()
-
     def isWeekday(self, string):
 
         # check if string is a weekday works with english and french
@@ -974,6 +908,63 @@ class TextBot():
                 return True
 
         return False
+
+    def isStringARoom(self, string):
+        # check if provided string is a reservable room by the system
+        # Like FTX-514
+
+        if len(string) > 10 or len(string) < 7:
+            return False
+
+        rooms = {
+                'CRX' : ['CRX-C520', 'CRX-C521', 'CRX-C522', 'CRX-C523', 'CRX-C524',
+                         'CRX-C525', 'CRX-C526', 'CRX-C527', 'CRX-C528','CRX-C529',
+                         'CRX-C541', 'CRX-C542', 'CRX-C543', 'CRX-C544', 'CRX-C545'],
+
+                 'FTX' : ['FTX-514', 'FTX-515', 'FTX-525A', 'FTX-525B',
+                  'FTX-525C', 'FTX-525D', 'FTX-525G', 'FTX-525H', 'FTX-525J'],
+
+                 'MRT' : ['MRT-404', 'MRT-405', 'MRT-406', 'MRT-407', 'MRT-408', 'MRT-409',
+                          'MRT-410', 'MRT-411', 'MRT-412','MRT-415', 'MRT-417', 'MRT-418'],
+
+                 'RGN' : ['RGN-1020J', 'RGN-1020K', 'RGN-1020L',
+                          'RGN-1020M', 'RGN-1020N', 'RGN-1020P']
+                 }
+
+        chars = []
+        Buildings = rooms.keys()
+
+        for i in range(0, 3):
+            chars.append(string[i])
+
+        charFromString = ''.join(chars)
+
+        if not (charFromString in rooms):
+            return False
+
+        roomsForBuilding = rooms[charFromString]
+
+        if string in roomsForBuilding:
+            return True
+
+        else:
+            return False
+
+    def isStringATimeSlot(self, string):
+
+        timeSlots = ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00',
+                    '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00',
+                    '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
+                    ]
+
+        for timeSlot in timeSlots:
+
+            if string == timeSlot:
+
+                return True
+
+        return False
+
 
     # SETTERS
 
