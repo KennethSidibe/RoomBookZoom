@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from credentials import *
 import undetected_chromedriver.v2 as uc
 from time import sleep
@@ -12,6 +13,20 @@ from constant import *
 
 
 class BookBot():
+
+    rooms = ['CRX-C520', 'CRX-C521', 'CRX-C522', 'CRX-C523', 'CRX-C524', 'CRX-C525',
+             'CRX-C526', 'CRX-C527', 'CRX-C528','CRX-C529', 'CRX-C541', 'CRX-C542',
+             'CRX-C543', 'CRX-C544', 'CRX-C545',
+
+             'FTX-514', 'FTX-515', 'FTX-525A', 'FTX-525B', 'FTX-525C', 'FTX-525D',
+             'FTX-525F', 'FTX-525G', 'FTX-525H', 'FTX-525J',
+
+             'MRT-404', 'MRT-405', 'MRT-406', 'MRT-407', 'MRT-408', 'MRT-409',
+             'MRT-410', 'MRT-411', 'MRT-412', 'MRT-415', 'MRT-417', 'MRT-418',
+
+             'RGN-1020J', 'RGN-1020K', 'RGN-1020L', 'RGN-1020M', 'RGN-1020N', 'RGN-1020P'
+             ]
+
 
     def login(self):
 
@@ -143,3 +158,94 @@ class BookBot():
         sleep(3)
 
         return driver
+
+    def getElementsText(self, driver, xPath):
+
+        texts = []
+
+        elements = driver.find_elements(By.XPATH, xPath)
+
+        for element in elements:
+
+            texts.append(element.text)
+
+        if len(texts) == 1:
+            return texts[0], driver
+
+        return texts, driver
+
+    def testRetrieveTable(self):
+
+        # Options
+        options = uc.ChromeOptions()
+        options.user_data_dir = "c:\\temp\\profile"
+        options.add_argument('--user-data-dir=c:\\temp\\profile2')
+        options.add_argument('--incognito')
+        options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+        capa = DesiredCapabilities.CHROME
+        capa["pageLoadStrategy"] = "none"
+
+        # creating the driver
+        driver = uc.Chrome(options=options, desired_capabilities=capa)
+        wait = WebDriverWait(driver, 20)
+
+        tableDemoUrl = 'file:///Users/kanekisidibe/Developer/Python/RoomBookZoom/HtmlBookSchedulePage.html'
+
+        # Opening the url
+        driver.get(tableDemoUrl)
+
+        reservationTableXPath = '//table[@class="reservations"]'
+        timeSlotXPath = '//*[@class="reslabel"]'
+        roomsXPath = '//td[@class="resourcename"]'
+        reservationDateXPath = '//*[@class="resdate"]'
+
+        wait.until(EC.presence_of_element_located((By.XPATH, reservationTableXPath)))
+
+        # driver.execute_script("window.stop();")
+
+        reservationDate, driver = self.getElementsText(driver, reservationDateXPath)
+        timeSlot, driver = self.getElementsText(driver, timeSlotXPath)
+        rooms, driver = self.getElementsText(driver, roomsXPath)
+
+        print(reservationDate)
+        print(timeSlot)
+        print(rooms)
+
+        driver.quit()
+
+    def find2HoursSlot(self, roomAvailability):
+
+        twoHoursSlot = []
+
+        for i  in range(0, len(roomAvailability)-1):
+
+            slot = roomAvailability[i]['timeSlot']
+            slotNext = roomAvailability[i+1]['timeSlot']
+            status = roomAvailability[i]['status']
+            statusNext = roomAvailability[i+1]['status']
+
+            if status == FULLY_RESERVABLE_INDICATOR and statusNext == FULLY_RESERVABLE_INDICATOR:
+
+                firstSlot = {'timeSlot':slot, 'id':i}
+                secondSlot = {'timeSlot':slotNext, 'id':i+1}
+
+                twoHoursSlot.append( { 'firstSlot':firstSlot, 'secondSlot':secondSlot } )
+
+        return  twoHoursSlot
+
+    def find1HourSlot(self, roomAvailability):
+
+        hourSlot = []
+
+        for i in range(0, len(roomAvailability)):
+
+            slot = roomAvailability[i]['timeSlot']
+            status = roomAvailability[i]['status']
+
+            if status == FULLY_RESERVABLE_INDICATOR:
+                slot = {'timeSlot': slot, 'id': i}
+
+                hourSlot.append( slot )
+
+        return hourSlot
+
