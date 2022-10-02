@@ -227,9 +227,25 @@ class BookBot():
             if status == FULLY_RESERVABLE_INDICATOR and statusNext == FULLY_RESERVABLE_INDICATOR:
 
                 firstSlot = {'timeSlot':slot, 'id':i}
-                secondSlot = {'timeSlot':slot, 'id':i}
+                secondSlot = {'timeSlot':slotNext, 'id':i+1}
 
                 twoHoursSlot.append( { 'firstSlot':firstSlot, 'secondSlot':secondSlot } )
 
         return  twoHoursSlot
+
+    def find1HourSlot(self, roomAvailability):
+
+        hourSlot = []
+
+        for i in range(0, len(roomAvailability)):
+
+            slot = roomAvailability[i]['timeSlot']
+            status = roomAvailability[i]['status']
+
+            if status == FULLY_RESERVABLE_INDICATOR:
+                slot = {'timeSlot': slot, 'id': i}
+
+                hourSlot.append( slot )
+
+        return hourSlot
 
