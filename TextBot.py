@@ -809,6 +809,8 @@ class TextBot():
 
         return False
 
+    def
+
     def isTimeSlotFullyReservable(self, timeSlotImg):
 
         if self.arePixelsWhite(timeSlotImg):
