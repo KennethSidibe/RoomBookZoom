@@ -606,32 +606,6 @@ class TextBot():
 
         return id
 
-    def getRoomAvailabilityWithSlot(self, roomName, timeSlot, roomSlot):
-
-        roomId = self.getRoomId(roomName)
-
-        roomBoundingBox = self.roomSlot[roomId][1]
-
-        roomImg = self.cropRoomSlotFromImg(self.calendarImg, roomBoundingBox)
-
-        # copyRoomImg = roomImg.copy()
-
-        # textRoomImg = self.addTimeSlotTextToImg(copyRoomImg, timeSlot)
-        # self.showImg(textRoomImg)
-
-        # slotWithText = self.addTimeSlotTextToImg(roomImg, timeSlot)
-
-        roomAvailability = {}
-
-        for i in range (0, len(self.timeSlot)):
-
-            timeSlotName = self.timeSlot[i][0]
-
-            status = self.getTimeSlotStatus(roomImg, timeSlotName, self.timeSlot)
-
-            roomAvailability[timeSlotName] = status
-
-        return roomAvailability
 
     def getTimeSlotStatus(self, timeSlotImg, timeSlotName):
         # Get the status from the requested TimeSlot Img
