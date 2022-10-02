@@ -20,6 +20,7 @@ if __name__ == '__main__':
     filepath8 = 'screencapture/booking_MRT412-RGN1020.png'
     testProcessFilePath = 'screencapture/testProcess.png'
     screenFilePath = 'SCREEN_IMG.png'
+    closeRoomFilepath = 'screencapture/closeRoomCapture.png'
 
     bot = LoginBot()
 
@@ -27,15 +28,21 @@ if __name__ == '__main__':
 
     textBot = TextBot()
 
+    img = cv2.imread(closeRoomFilepath)
+
     # bookBot.testRetrieveTable()
 
-    availability = textBot.analyze(filepathEmpty)
+    # availability = textBot.analyze(filepath2)
 
-    twoHoursConsecutive = bookBot.find2HoursSlot(availability['CRX-C520'])
-    hourSlot = bookBot.find1HourSlot(availability['CRX-C520'])
+    # print(availability['FTX-514'])
 
-    print(twoHoursConsecutive)
-    print(hourSlot)
+    result = textBot.isTimeSlotClose(img)
+
+    print(result)
+
+    # twoHoursConsecutive = bookBot.find2HoursSlot(availability['CRX-C520'])
+    # hourSlot = bookBot.find1HourSlot(availability['CRX-C520'])
+
 
     # start = time.time()
 
