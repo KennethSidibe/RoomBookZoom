@@ -234,9 +234,41 @@ class TextBot():
 
         return timeSlot
 
+    def prepareRoomAnalysis(self):
+        # Generate all the required attributes for the functioning of getRoomAvailability Method
+
+        if (type(self.calendarImg) == type(np.array([]))):
+
+            if not ( self.calendarImg.size == 0 or self.dateCoordinate == None ):
+
+                # Get timeslot for the timetable and their coordinates on the screencapture
+                timeSlot = self.getTimeSlot()
+                self.setTimeSlot(timeSlot)
+
+                # Get roomsSlot for the timetable and their coordinates
+                roomNameImg = self.cropRoomName(self.calendarImg)
+                self.setRoomNameImg(roomNameImg)
+
+                # Get the roomName Image Analysis
+                roomNameAnalysis = pytesseract.image_to_data(roomNameImg, output_type=Output.DICT)
+                self.setRoomNameAnalysis(roomNameAnalysis)
+
+                # Get all the roomsName
+                roomsName = self.generateRoomsName()
+                self.setRoomsName(roomsName)
+
+                # Get the roomSlotCoordinate data
+                roomSlot = self.generateRoomSlot()
+                self.setRoomSlot(roomSlot)
+
+        else:
+            print("Failed to prepare analysis, img is None")
 
 
-    # Image processing functions
+
+    # Image manipulating methods
+
+    #     Image portioning methods
 
     def portionImageByHeight(self, img, currTop=0, heightDivisor=0):
 
@@ -337,6 +369,8 @@ class TextBot():
 
         return rowPortionsImg
 
+    #     Image preprocessing methods
+
     def preprocessTimeSlotImg(self, img):
         # Preprocess img to upgrade text analysis result for current img timeslot
 
@@ -358,14 +392,6 @@ class TextBot():
 
 
     # Cropping functions
-
-    def showAllImgPortions(self, imgPortions):
-
-        for row in imgPortions:
-
-            for img in row:
-
-                self.showImg(img)
 
     def cropCalendarImage(self, screencaptureImg):
         # Crop the calendar from the screencapture
@@ -443,36 +469,6 @@ class TextBot():
         cropImg = img[top:top + height, left: left + width]
 
         return cropImg
-
-    def prepareRoomAnalysis(self):
-        # Generate all the required attributes for the functioning of getRoomAvailability Method
-
-        if (type(self.calendarImg) == type(np.array([]))):
-
-            if not ( self.calendarImg.size == 0 or self.dateCoordinate == None ):
-
-                # Get timeslot for the timetable and their coordinates on the screencapture
-                timeSlot = self.getTimeSlot()
-                self.setTimeSlot(timeSlot)
-
-                # Get roomsSlot for the timetable and their coordinates
-                roomNameImg = self.cropRoomName(self.calendarImg)
-                self.setRoomNameImg(roomNameImg)
-
-                # Get the roomName Image Analysis
-                roomNameAnalysis = pytesseract.image_to_data(roomNameImg, output_type=Output.DICT)
-                self.setRoomNameAnalysis(roomNameAnalysis)
-
-                # Get all the roomsName
-                roomsName = self.generateRoomsName()
-                self.setRoomsName(roomsName)
-
-                # Get the roomSlotCoordinate data
-                roomSlot = self.generateRoomSlot()
-                self.setRoomSlot(roomSlot)
-
-        else:
-            print("Failed to prepare analysis, img is None")
 
 
 
@@ -606,12 +602,27 @@ class TextBot():
         else:
             return 'UND'
 
+    def showAllImgPortions(self, imgPortions):
+
+        for row in imgPortions:
+
+            for img in row:
+                self.showImg(img)
+
+    def showImg(self, img):
+        # Show image with wait statement
+
+        cv2.imshow('window', img)
+
+        cv2.setWindowProperty('window', cv2.WND_PROP_TOPMOST, 1)
+
+        cv2.waitKey()
 
 
 
     # Search methods
 
-        def findCropDateCoordinateByHeight(self, screencaptureImg):
+    def findCropDateCoordinateByHeight(self, screencaptureImg):
 
             dateId = -1
 
@@ -785,14 +796,7 @@ class TextBot():
 
                 return i
 
-    def showImg(self, img):
-        # Show image with wait statement
 
-        cv2.imshow('window', img)
-
-        cv2.setWindowProperty('window', cv2.WND_PROP_TOPMOST, 1)
-
-        cv2.waitKey()
 
 
 
