@@ -196,8 +196,23 @@ class TextBot():
         elif self.isSecondHalfReservable(timeSlotStatusImg):
             return SECOND_HALF_INDICATOR
 
-        else:
+        elif self.isTimeSlotClose(timeSlotStatusImg):
             return CLOSED_INDICATOR
+
+        elif self.isTimeSlotFirstHalfReservableSecondHalfClose(timeSlotStatusImg):
+            return FIRST_HALF_FREE_SECOND_HALF_CLOSE_INDICATOR
+
+        elif self.isTimeSlotFirstHalfFullSecondHalfClose(timeSlotImg):
+            return FIRST_HALF_FULL_SECOND_HALF_CLOSE_INDICATOR
+
+        elif self.isTimeSlotFirstHalfCloseSecondHalfReservable(timeSlotStatusImg):
+            return FIRST_HALF_CLOSE_SECOND_HALF_FREE_INDICATOR
+
+        elif self.isTimeSlotFirstHalfCloseSecondHalfFull(timeSlotStatusImg):
+            FIRST_HALF_CLOSE_SECOND_HALF_FULL_INDICATOR
+
+        else:
+            return None
 
     def getTimeSlot(self):
 
