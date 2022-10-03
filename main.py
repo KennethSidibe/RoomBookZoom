@@ -21,6 +21,10 @@ if __name__ == '__main__':
     testProcessFilePath = 'screencapture/testProcess.png'
     screenFilePath = 'SCREEN_IMG.png'
     closeRoomFilepath = 'screencapture/closeRoomCapture.png'
+    testWhitePath = 'screencapture/testWhite.png'
+    testBluePath = 'screencapture/testBlue.png'
+    testHalfWhiteBluePath = 'screencapture/testHalfWhiteBlue.png'
+    testCloseWithWhiteText = 'screencapture/testCloseWithText.png'
 
     bot = LoginBot()
 
@@ -28,7 +32,7 @@ if __name__ == '__main__':
 
     textBot = TextBot()
 
-    img = cv2.imread(closeRoomFilepath)
+    img = cv2.imread(testCloseWithWhiteText)
 
     # bookBot.testRetrieveTable()
 
