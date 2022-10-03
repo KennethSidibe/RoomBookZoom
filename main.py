@@ -19,19 +19,7 @@ if __name__ == '__main__':
     filepath7 = 'screencapture/booking_FTX525-MRT412.png'
     filepath8 = 'screencapture/booking_MRT412-RGN1020.png'
     testProcessFilePath = 'screencapture/testProcess.png'
-    screenFilePath = 'SCREEN_IMG.png'
-
-    closeRoomFilepath = 'screencapture/closeRoomCapture.png'
-    testWhitePath = 'screencapture/testWhite.png'
-    testBluePath = 'screencapture/testBlue.png'
-    testHalfWhiteBluePath = 'screencapture/testHalfWhiteBlue.png'
-    testCloseWithWhiteText = 'screencapture/testCloseWithText.png'
-    testSpecialIsClosePath = 'screencapture/testCloseHalf.png'
-    testSpecialClosePath = 'screencapture/testSpecialClose.png'
-    firstHalfCloseSecondHalfFullPath = 'screencapture/firstHalfCloseSecondHalfFullScreen.png'
-    firstHalfFullSecondHalfClose = 'screencapture/firstHalfFullSecondHalfCloseScreen.png'
-    firstHFullSecondClose = 'screencapture/firstHalfFullSecondClose.png'
-
+    screenFilePath = 'screencapture/SCREEN_1_IMG.png'
 
     bot = LoginBot()
 
@@ -41,7 +29,7 @@ if __name__ == '__main__':
 
     # bookBot.testRetrieveTable()
 
-    availability = textBot.analyze(filepath2)
+    availability = textBot.analyze(screenFilePath)
 
     # print(availability['FTX-514'])
 
