@@ -1,4 +1,6 @@
-uoLoginUrl = 'https://login.microsoftonline.com/'
+
+
+# URL for login into booking room
 uoBookRoomUrl = 'https://bibliorooms.uottawa.ca/'
 
 boundBoxPixelOffset = 40
