@@ -614,8 +614,18 @@ class TextBot():
             return 'FFREE'
         elif availabilityIndicator == SECOND_HALF_INDICATOR:
             return 'SFREE'
-        else:
+        elif availabilityIndicator == FIRST_HALF_FREE_SECOND_HALF_CLOSE_INDICATOR:
+            return 'FHfSC'
+        elif availabilityIndicator == FIRST_HALF_FULL_SECOND_HALF_CLOSE_INDICATOR:
+            return 'FHFSC'
+        elif availabilityIndicator == FIRST_HALF_CLOSE_SECOND_HALF_FREE_INDICATOR:
+            return 'FCSHf'
+        elif availabilityIndicator == FIRST_HALF_CLOSE_SECOND_HALF_FULL_INDICATOR:
+            return 'FCSHF'
+        elif availabilityIndicator == CLOSED_INDICATOR:
             return 'CLOS'
+        else:
+            return 'UND'
 
     def showAllImgPortions(self, imgPortions):
 
