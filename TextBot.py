@@ -184,33 +184,51 @@ class TextBot():
 
         timeSlotStatusImg = self.cropImgWithBoundingBox(timeSlotImg, timeSlotBoundingBox)
 
-        if self.isTimeSlotFull(timeSlotStatusImg):
-            return FULLY_BOOK_INDICATOR
+        self.showImg(timeSlotStatusImg)
 
-        elif self.isTimeSlotFullyReservable(timeSlotStatusImg):
-            return FULLY_RESERVABLE_INDICATOR
-
-        elif self.isFirstHalfReservable(timeSlotStatusImg):
-            return FIRST_HALF_INDICATOR
-
-        elif self.isSecondHalfReservable(timeSlotStatusImg):
-            return SECOND_HALF_INDICATOR
-
-        elif self.isTimeSlotClose(timeSlotStatusImg):
-            return CLOSED_INDICATOR
-
-        elif self.isTimeSlotFirstHalfReservableSecondHalfClose(timeSlotStatusImg):
+        if self.isTimeSlotFirstHalfReservableSecondHalfClose(timeSlotStatusImg):
+            print(FIRST_HALF_FREE_SECOND_HALF_CLOSE_INDICATOR)
+            print()
             return FIRST_HALF_FREE_SECOND_HALF_CLOSE_INDICATOR
 
         elif self.isTimeSlotFirstHalfFullSecondHalfClose(timeSlotImg):
+            print(FIRST_HALF_FULL_SECOND_HALF_CLOSE_INDICATOR)
+            print()
             return FIRST_HALF_FULL_SECOND_HALF_CLOSE_INDICATOR
 
         elif self.isTimeSlotFirstHalfCloseSecondHalfReservable(timeSlotStatusImg):
+            print(FIRST_HALF_CLOSE_SECOND_HALF_FREE_INDICATOR)
+            print()
             return FIRST_HALF_CLOSE_SECOND_HALF_FREE_INDICATOR
 
         elif self.isTimeSlotFirstHalfCloseSecondHalfFull(timeSlotStatusImg):
+            print(FIRST_HALF_CLOSE_SECOND_HALF_FULL_INDICATOR)
             FIRST_HALF_CLOSE_SECOND_HALF_FULL_INDICATOR
 
+        elif self.isTimeSlotClose(timeSlotStatusImg):
+            print(CLOSED_INDICATOR)
+            print()
+            return CLOSED_INDICATOR
+
+        elif self.isTimeSlotFull(timeSlotStatusImg):
+            print(FULLY_BOOK_INDICATOR)
+            print()
+            return FULLY_BOOK_INDICATOR
+
+        elif self.isTimeSlotFullyReservable(timeSlotStatusImg):
+            print(FULLY_RESERVABLE_INDICATOR)
+            print()
+            return FULLY_RESERVABLE_INDICATOR
+
+        elif self.isFirstHalfReservable(timeSlotStatusImg):
+            print(FIRST_HALF_INDICATOR)
+            print()
+            return FIRST_HALF_INDICATOR
+
+        elif self.isSecondHalfReservable(timeSlotStatusImg):
+            print(SECOND_HALF_INDICATOR)
+            print()
+            return SECOND_HALF_INDICATOR
         else:
             return None
 
@@ -837,6 +855,13 @@ class TextBot():
     def isTimeSlotFirstHalfReservableSecondHalfClose(self, timeSlotImg):
 
         leftPortion, rightPortion = self.cropPortionsLeftAndRightTimeslot(timeSlotImg)
+
+        isWhite = self.arePixelsWhite(leftPortion)
+        self.showImg(rightPortion)
+        isClose = self.isTimeSlotClose(rightPortion)
+
+        print(isWhite)
+        print(isClose)
 
         if self.arePixelsWhite(leftPortion) and self.isTimeSlotClose(rightPortion):
 
