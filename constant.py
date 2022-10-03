@@ -1,5 +1,4 @@
 
-
 # URL for login into booking room
 uoBookRoomUrl = 'https://bibliorooms.uottawa.ca/'
 
@@ -74,6 +73,9 @@ NARROW_SEARCH_MAX_ITERATION = 3
 '''
     constants rgb values representing the color 
     of the portion of the image representing by closed indicator
+    
+    It is a range because the actual value is not always the same since
+    the image portioning is random 
 '''
 
 CLOSE_IMAGE_RED_MAX_VALUE = 220
