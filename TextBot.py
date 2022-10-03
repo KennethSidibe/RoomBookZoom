@@ -809,7 +809,15 @@ class TextBot():
 
         return False
 
-    def
+    def isTimeSlotFirstHalfReservableSecondHalfClose(self, timeSlotImg):
+
+        leftPortion, rightPortion = self.cropPortionsLeftAndRightTimeslot(timeSlotImg)
+
+        if self.arePixelsWhite(leftPortion) and self.isTimeSlotClose(rightPortion):
+
+            return True
+
+        return False
 
     def isTimeSlotFullyReservable(self, timeSlotImg):
 
@@ -823,6 +831,24 @@ class TextBot():
         leftPortion = self.cropPortionsLeftAndRightTimeslot(timeSlotImg)[0]
 
         if self.arePixelsWhite(leftPortion):
+            return True
+
+        return False
+
+    def isTimeSlotClose(self, img):
+
+        # Verify is img has the color of a closed timeSlot
+
+        bluePixels, greenPixels, redPixels = cv2.split(img)
+
+        blueMean = int(np.mean(bluePixels))
+        greenMean = int(np.mean(greenPixels))
+        redMean = int(np.mean(redPixels))
+
+        if CLOSE_IMAGE_BLUE_MIN_VALUE <= blueMean <= CLOSE_IMAGE_BLUE_MAX_VALUE and\
+           CLOSE_IMAGE_GREEN_MIN_VALUE <= greenMean <= CLOSE_IMAGE_GREEN_MAX_VALUE and\
+           CLOSE_IMAGE_RED_MIN_VALUE <= redMean <= CLOSE_IMAGE_RED_MAX_VALUE:
+
             return True
 
         return False
