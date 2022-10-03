@@ -819,6 +819,17 @@ class TextBot():
 
         return False
 
+    def isTimeSlotFirstHalfFullSecondHalfClose(self, timeSlotImg):
+
+        leftPortion, rightPortion = self.cropPortionsLeftAndRightTimeslot(timeSlotImg)
+
+        if self.arePixelsBlue(leftPortion) and self.isTimeSlotClose(rightPortion):
+
+            return True
+
+        return False
+
+
     def isTimeSlotFullyReservable(self, timeSlotImg):
 
         if self.arePixelsWhite(timeSlotImg):
