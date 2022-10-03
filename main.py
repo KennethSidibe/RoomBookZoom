@@ -28,6 +28,10 @@ if __name__ == '__main__':
     testCloseWithWhiteText = 'screencapture/testCloseWithText.png'
     testSpecialIsClosePath = 'screencapture/testCloseHalf.png'
     testSpecialClosePath = 'screencapture/testSpecialClose.png'
+    firstHalfCloseSecondHalfFullPath = 'screencapture/firstHalfCloseSecondHalfFullScreen.png'
+    firstHalfFullSecondHalfClose = 'screencapture/firstHalfFullSecondHalfCloseScreen.png'
+    firstHFullSecondClose = 'screencapture/firstHalfFullSecondClose.png'
+
 
     bot = LoginBot()
 
@@ -35,18 +39,16 @@ if __name__ == '__main__':
 
     textBot = TextBot()
 
-    img = cv2.imread(testSpecialClosePath)
+    img = cv2.imread(firstHFullSecondClose)
 
-    res = textBot.isTimeSlotClose(img)
-
-    print(res)
+    # res = textBot.isTimeSlotFirstHalfCloseSecondHalfFull(img)
+    # res = textBot.isTimeSlotFirstHalfFullSecondHalfClose(img)
 
     # bookBot.testRetrieveTable()
 
-    # availability = textBot.analyze(filepath2)
+    availability = textBot.analyze(filepath2)
 
     # print(availability['FTX-514'])
-
 
     # twoHoursConsecutive = bookBot.find2HoursSlot(availability['CRX-C520'])
     # hourSlot = bookBot.find1HourSlot(availability['CRX-C520'])
