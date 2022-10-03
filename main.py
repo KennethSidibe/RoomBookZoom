@@ -39,11 +39,6 @@ if __name__ == '__main__':
 
     textBot = TextBot()
 
-    img = cv2.imread(firstHFullSecondClose)
-
-    # res = textBot.isTimeSlotFirstHalfCloseSecondHalfFull(img)
-    # res = textBot.isTimeSlotFirstHalfFullSecondHalfClose(img)
-
     # bookBot.testRetrieveTable()
 
     availability = textBot.analyze(filepath2)
