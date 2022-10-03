@@ -32,6 +32,7 @@ class TextBot():
         self.setCalendarImg(calendarImg)
 
         calendarAnalysis = pytesseract.image_to_data(self.calendarImg, output_type=Output.DICT)
+        calendarAnalysis = self.correctPossibleIandTConfusionInAnalysis(calendarAnalysis)
         self.setCalendarAnalysis(calendarAnalysis)
 
         # this function generate timeslot and roomSlot
@@ -82,6 +83,8 @@ class TextBot():
         preprocess = self.preprocessDateImg(imgPortion)
 
         portionAnalysis = pytesseract.image_to_data(preprocess, output_type=Output.DICT)
+        portionAnalysis = self.correctPossibleIandTConfusionInAnalysis(portionAnalysis)
+
         analyzedText = portionAnalysis['text']
 
         dateId = self.findIdOfDate(analyzedText)
@@ -140,7 +143,6 @@ class TextBot():
 
             roomsAvailability[room] = availability
 
-
         return roomsAvailability
 
     def generateRoomSlot(self):
@@ -150,16 +152,14 @@ class TextBot():
 
         for i in range(0, len(self.roomNameAnalysis['text'])):
 
-            if self.roomNameAnalysis['conf'][i] >= 30:
+            text = self.roomNameAnalysis['text'][i]
 
-                text = self.roomNameAnalysis['text'][i]
+            if self.isStringARoom(text):
 
-                if self.isStringARoom(text):
+                boundingBox = self.getTextBoundingBox(self.roomNameAnalysis, i)
+                slot = [text, boundingBox]
 
-                    boundingBox = self.getTextBoundingBox(self.roomNameAnalysis, i)
-                    slot = [text, boundingBox]
-
-                    roomsSlot.append(slot)
+                roomsSlot.append(slot)
 
         return  roomsSlot
 
@@ -198,7 +198,7 @@ class TextBot():
         elif self.isTimeSlotFirstHalfCloseSecondHalfFull(timeSlotStatusImg):
             return FIRST_HALF_CLOSE_SECOND_HALF_FULL_INDICATOR
 
-        elif self.isTimeSlotClose(timeSlotStatusImg):
+        elif self.isTimeSlotClosed(timeSlotStatusImg):
             return CLOSED_INDICATOR
 
         elif self.isTimeSlotFull(timeSlotStatusImg):
@@ -233,6 +233,7 @@ class TextBot():
         processImg = self.preprocessTimeSlotImg(availableTimeImg)
 
         timeAnalyzed = pytesseract.image_to_data(processImg, output_type=Output.DICT)
+        timeAnalyzed = self.correctPossibleIandTConfusionInAnalysis(timeAnalyzed)
 
         for i in range(0, len(timeAnalyzed['text'])):
 
@@ -267,6 +268,7 @@ class TextBot():
 
                 # Get the roomName Image Analysis
                 roomNameAnalysis = pytesseract.image_to_data(roomNameImg, output_type=Output.DICT)
+                roomNameAnalysis = self.correctPossibleIandTConfusionInAnalysis(roomNameAnalysis)
                 self.setRoomNameAnalysis(roomNameAnalysis)
 
                 # Get all the roomsName
@@ -280,7 +282,16 @@ class TextBot():
         else:
             print("Failed to prepare analysis, img is None")
 
+    def correctPossibleIandTConfusionInAnalysis(self, analyzedResults):
 
+        texts = analyzedResults['text']
+
+        for i in range (0, len(texts) ):
+
+            correctedText = self.correctPossibleIandTConfusion(texts[i])
+            analyzedResults['text'][i] = correctedText
+
+        return analyzedResults
 
     # Image manipulating methods
 
@@ -839,7 +850,7 @@ class TextBot():
 
         leftPortion, rightPortion = self.cropPortionsLeftAndRightTimeslot(timeSlotImg)
 
-        if self.arePixelsWhite(leftPortion) and self.isTimeSlotClose(rightPortion):
+        if self.arePixelsWhite(leftPortion) and self.isTimeSlotClosed(rightPortion):
 
             return True
 
@@ -849,7 +860,7 @@ class TextBot():
 
         leftPortion, rightPortion = self.cropPortionsLeftAndRightTimeslot(timeSlotImg)
 
-        if self.arePixelsBlue(leftPortion) and self.isTimeSlotClose(rightPortion):
+        if self.arePixelsBlue(leftPortion) and self.isTimeSlotClosed(rightPortion):
 
             return True
 
@@ -859,7 +870,7 @@ class TextBot():
 
         leftPortion, rightPortion = self.cropPortionsLeftAndRightTimeslot(timeSlotImg)
 
-        if self.isTimeSlotClose(leftPortion) and self.arePixelsWhite(rightPortion):
+        if self.isTimeSlotClosed(leftPortion) and self.arePixelsWhite(rightPortion):
 
             return True
 
@@ -869,12 +880,11 @@ class TextBot():
 
         leftPortion, rightPortion = self.cropPortionsLeftAndRightTimeslot(timeSlotImg)
 
-        if self.isTimeSlotClose(leftPortion) and self.arePixelsBlue(rightPortion):
+        if self.isTimeSlotClosed(leftPortion) and self.arePixelsBlue(rightPortion):
 
             return True
 
         return False
-
 
     def isTimeSlotFullyReservable(self, timeSlotImg):
 
@@ -892,7 +902,7 @@ class TextBot():
 
         return False
 
-    def isTimeSlotClose(self, img):
+    def isTimeSlotClosed(self, img):
 
         # Verify is img has the color of a closed timeSlot
 
@@ -998,6 +1008,25 @@ class TextBot():
 
         return False
 
+    def correctPossibleIandTConfusion(self, string):
+
+        if len(string) > 10 or len(string) < 7:
+            return string
+
+        buildingName = string[0] + string[1] + string[2]
+        restOfName = ''
+
+        for i in range(3, len(string)):
+            restOfName += string[i]
+
+        if buildingName == 'FIX':
+            return "FTX" + restOfName
+
+
+
+        return string
+
+
     def isStringARoom(self, string):
         # check if provided string is a reservable room by the system
         # Like FTX-514
@@ -1053,7 +1082,6 @@ class TextBot():
                 return True
 
         return False
-
 
     # SETTERS
 
