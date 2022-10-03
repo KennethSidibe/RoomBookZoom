@@ -912,9 +912,9 @@ class TextBot():
         greenMean = int(np.mean(greenPixels))
         redMean = int(np.mean(redPixels))
 
-        if CLOSE_IMAGE_BLUE_MIN_VALUE <= blueMean <= CLOSE_IMAGE_BLUE_MAX_VALUE and\
-           CLOSE_IMAGE_GREEN_MIN_VALUE <= greenMean <= CLOSE_IMAGE_GREEN_MAX_VALUE and\
-           CLOSE_IMAGE_RED_MIN_VALUE <= redMean <= CLOSE_IMAGE_RED_MAX_VALUE:
+        if CLOSED_IMAGE_BLUE_MIN_VALUE <= blueMean <= CLOSED_IMAGE_BLUE_MAX_VALUE and\
+           CLOSED_IMAGE_GREEN_MIN_VALUE <= greenMean <= CLOSED_IMAGE_GREEN_MAX_VALUE and\
+           CLOSED_IMAGE_RED_MIN_VALUE <= redMean <= CLOSED_IMAGE_RED_MAX_VALUE:
 
             return True
 
