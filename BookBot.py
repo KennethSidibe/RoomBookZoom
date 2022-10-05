@@ -1,3 +1,5 @@
+import time
+
 import pyotp
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -96,6 +98,8 @@ class BookBot():
 
         driver = self.waitForElementToAppear(pwdFieldXPath, driver)
         driver = self.waitForElementToBeClickable(pwdSignInButtonXPath, driver)
+
+        sleep(1)
 
         pwdField = driver.find_element(By.XPATH, pwdFieldXPath)
         pwdSignInButton = driver.find_element(By.XPATH, pwdSignInButtonXPath)
