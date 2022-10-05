@@ -112,6 +112,10 @@ class TextBot():
         height = portionAnalysis['height'][dateId]
         width = portionAnalysis['width'][dateId]
 
+        boundBox = {'x':{'left':left, 'width':width}, 'y':{'top':top, 'height':height}}
+
+        self.drawAroundBoundingBox(preprocess, boundBox)
+
         return dateId, left, top, height, width
 
     def getRoomAvailability(self, roomName):
@@ -653,7 +657,6 @@ class TextBot():
         cv2.setWindowProperty('window', cv2.WND_PROP_TOPMOST, 1)
 
         cv2.waitKey()
-
 
 
     # Search methods
