@@ -28,9 +28,58 @@ class BookBot():
              ]
 
 
+    def login(self):
+
+        # Options
+        options = uc.ChromeOptions()
+
+        options.user_data_dir = "c:\\temp\\profile"
+
+        options.add_argument('--user-data-dir=c:\\temp\\profile2')
+        options.add_argument('--incognito')
+
+        options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+
+        # creating the driver
+        driver = uc.Chrome(options=options)
+
+        # Opening the url
+        driver.get((uoBookRoomUrl))
+
+    #   entering username
+        driver = self.enteringUsername(driver)
+
+        # entering pwd
+        driver = self.enteringPwd(driver)
+
+        # Pick 2FA methods
+        driver = self.pick2FAMethod(driver)
+
+        # Select 2FA Methods
+        driver = self.select2FAMethod(driver)
+
+        # Entering OTP code
+        driver = self.enterOTPCode(driver)
+
+        # confirming stayed login
+        driver = self.confirmStayedLogIn(driver)
+
+        # access the booking schedule page
+        driver = self.accessBookSchedule(driver)
+
+        # Take screenshot of the page
+        driver = self.takeScreenshotOfNDays(8, driver)
+
+        # input is just to wait and see results
+        driver.quit()
+
     def enteringUsername(self, driver):
+
         usernameFieldXPath = '//*[@id="i0116"]'
         usernameNextButtonXPath = '//*[@id="idSIButton9"]'
+
+        driver = self.waitForElementToAppear(usernameFieldXPath, driver)
+        driver = self.waitForElementToBeClickable(usernameNextButtonXPath, driver)
 
         usernameField = driver.find_element(By.XPATH, usernameFieldXPath)
         usernameNextButton = driver.find_element(By.XPATH, usernameNextButtonXPath)
@@ -45,6 +94,9 @@ class BookBot():
         pwdFieldXPath = '//*[@id="i0118"]'
         pwdSignInButtonXPath = '//*[@id="idSIButton9"]'
 
+        driver = self.waitForElementToAppear(pwdFieldXPath, driver)
+        driver = self.waitForElementToBeClickable(pwdSignInButtonXPath, driver)
+
         pwdField = driver.find_element(By.XPATH, pwdFieldXPath)
         pwdSignInButton = driver.find_element(By.XPATH, pwdSignInButtonXPath)
 
@@ -57,6 +109,8 @@ class BookBot():
 
         pick2FAMethodButtonXPath = '//*[@id="signInAnotherWay"]'
 
+        driver = self.waitForElementToBeClickable(pick2FAMethodButtonXPath, driver)
+
         pick2FAMethodButton = driver.find_element(By.XPATH, pick2FAMethodButtonXPath)
 
         pick2FAMethodButton.click()
@@ -67,6 +121,7 @@ class BookBot():
 
         selectCode2FAButtonXPath = '//*[@id="idDiv_SAOTCS_Proofs"]/div[2]/div'
 
+        driver = self.waitForElementToBeClickable(selectCode2FAButtonXPath, driver)
         selectCode2FAButton = driver.find_element(By.XPATH, selectCode2FAButtonXPath)
 
         selectCode2FAButton.click()
@@ -77,6 +132,9 @@ class BookBot():
 
         otpFieldXPath = '//*[@id="idTxtBx_SAOTCC_OTC"]'
         verifyButtonXPath = '//*[@id="idSubmit_SAOTCC_Continue"]'
+
+        driver = self.waitForElementToAppear(otpFieldXPath, driver)
+        driver = self.waitForElementToBeClickable(verifyButtonXPath, driver)
 
         otpField = driver.find_element(By.XPATH, otpFieldXPath)
         verifyButton = driver.find_element(By.XPATH, verifyButtonXPath)
@@ -93,6 +151,9 @@ class BookBot():
         noButtonXPath = '//*[@id="idBtn_Back"]'
         yesButtonXPath = '//*[@id="idSIButton9"]'
 
+        driver = self.waitForElementToBeClickable(reduceLoginBoxXPath, driver)
+        driver = self.waitForElementToBeClickable(yesButtonXPath, driver)
+
         reduceLoginBox = driver.find_element(By.XPATH, reduceLoginBoxXPath)
         noButton = driver.find_element(By.XPATH, noButtonXPath)
         yesButton = driver.find_element(By.XPATH, yesButtonXPath)
@@ -105,6 +166,8 @@ class BookBot():
     def accessBookSchedule(self, driver):
 
         bookRoomButtonXPath = '//*[@id="navReservation"]/a'
+
+        driver = self.waitForElementToBeClickable(bookRoomButtonXPath, driver)
 
         bookRoomButton = driver.find_element(By.XPATH, bookRoomButtonXPath)
 
@@ -124,27 +187,43 @@ class BookBot():
 
             driver = self.goToNextPage(driver)
 
+        return driver
+
     def getOTP(self):
 
         totp = pyotp.parse_uri(uoAuthSecretURI)
 
         return totp.now()
 
-    def waitForElementToAppear(self, elementXPath):
+    def waitForElementToAppear(self, elementXPath, driver):
+
+        wait = WebDriverWait(driver, 20)
 
         # Increase the processing time of the alg
-
         wait.until(EC.presence_of_element_located((By.XPATH, elementXPath)))
+
+        print('successfully waited')
+
+        return driver
+
+    def waitForElementToBeClickable(self, elementXPath, driver):
+
+        wait = WebDriverWait(driver, 20)
+
+        wait.until(EC.element_to_be_clickable((By.XPATH, elementXPath)))
+
+        return driver
 
     def goToNextPage(self, driver):
 
         # Go to next page
         nextPageButtonXPath = '//*[@id="page-schedule"]/div[2]/div[2]/a[3]'
+
+        driver = self.waitForElementToBeClickable(nextPageButtonXPath, driver)
+
         nextPageButton = driver.find_element(By.XPATH, nextPageButtonXPath)
 
         nextPageButton.click()
-
-        sleep(3)
 
         return driver
 
@@ -188,7 +267,7 @@ class BookBot():
         roomsXPath = '//td[@class="resourcename"]'
         reservationDateXPath = '//*[@class="resdate"]'
 
-        wait.until(EC.presence_of_element_located((By.XPATH, reservationTableXPath)))
+        driver = self.waitForElementToAppear(reservationTableXPath, driver)
 
         # driver.execute_script("window.stop();")
 
@@ -238,62 +317,5 @@ class BookBot():
 
         return hourSlot
 
-    def login(self):
 
-        # Options
-        options = uc.ChromeOptions()
-
-        options.user_data_dir = "c:\\temp\\profile"
-
-        options.add_argument('--user-data-dir=c:\\temp\\profile2')
-        options.add_argument('--incognito')
-
-        options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
-
-        # creating the driver
-        driver = uc.Chrome(options=options)
-
-        # Opening the url
-        driver.get((uoBookRoomUrl))
-
-    #   entering username
-        driver = self.enteringUsername(driver)
-
-        sleep(3)
-
-        # entering pwd
-        driver = self.enteringPwd(driver)
-
-        sleep(4)
-
-        # Pick 2FA methods
-        driver = self.pick2FAMethod(driver)
-
-        sleep(3)
-
-        # Select 2FA Methods
-
-        self.select2FAMethod(driver)
-
-        sleep(3)
-
-        # Entering OTP code
-        driver = self.enterOTPCode(driver)
-
-        sleep(3)
-
-        # confirming stayed login
-        driver = self.confirmStayedLogIn(driver)
-
-
-        sleep(5)
-
-        # access the booking schedule page
-        driver = self.accessBookSchedule(driver)
-
-        # Take screenshot of the page
-        driver = self.takeScreenshotOfNDays(8, driver)
-
-        # input is just to wait and see results
-        driver.quit()
 
