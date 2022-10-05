@@ -202,8 +202,6 @@ class BookBot():
         # Increase the processing time of the alg
         wait.until(EC.presence_of_element_located((By.XPATH, elementXPath)))
 
-        print('successfully waited')
-
         return driver
 
     def waitForElementToBeClickable(self, elementXPath, driver):
