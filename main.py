@@ -7,6 +7,15 @@ import time
 
 if __name__ == '__main__':
 
+    def analyzeNImages(numberOfPages, textBot):
+
+        for i in range(1, numberOfPages):
+
+            imageFilePath = 'screencapture/SCREEN_' + str(i) + '_IMG.PNG'
+
+            textBot.analyze(imageFilePath)
+
+
     mobileFilepath = 'screencapture/mobileBookingScreenshot.jpg'
     smallCopyFilePath = 'screencapture/smallBookingSchedule.png'
     filepath = 'screencapture/booking_hard_test.png'
@@ -27,30 +36,15 @@ if __name__ == '__main__':
 
     textBot = TextBot()
 
-    # bookBot.testRetrieveTable()
+    bookBot.login()
 
-    availability = textBot.analyze(screenFilePath)
-
-    # print(availability['FTX-514'])
-
-    # twoHoursConsecutive = bookBot.find2HoursSlot(availability['CRX-C520'])
-    # hourSlot = bookBot.find1HourSlot(availability['CRX-C520'])
-
-
-    # start = time.time()
-
-    # for i in range(1, 8):
-    #
-    #     fileName = 'SCREEN_' + str(i) + '_IMG.png'
-    #
-    #     screenFilePath = 'screencapture/' + fileName
-    #
-    #     availability = textBot.analyze(screenFilePath)
-    #
-
+    analyzeNImages(8, textBot)
 
     # elapsedTime = time.time() - start
 
     # print(availability)
 
     # print('elapsed time : ', elapsedTime)
+
+
+
