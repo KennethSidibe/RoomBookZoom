@@ -28,25 +28,7 @@ class BookBot():
              ]
 
 
-    def login(self):
-
-        # Options
-        options = uc.ChromeOptions()
-
-        options.user_data_dir = "c:\\temp\\profile"
-
-        options.add_argument('--user-data-dir=c:\\temp\\profile2')
-        options.add_argument('--incognito')
-
-        options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
-
-        # creating the driver
-        driver = uc.Chrome(options=options)
-
-        # Opening the url
-        driver.get((uoBookRoomUrl))
-
-    #   entering username
+    def enteringUsername(self, driver):
         usernameFieldXPath = '//*[@id="i0116"]'
         usernameNextButtonXPath = '//*[@id="idSIButton9"]'
 
@@ -56,9 +38,9 @@ class BookBot():
         usernameField.send_keys(uoUsername)
         usernameNextButton.click()
 
-        sleep(3)
+        return driver
 
-        # entering pwd
+    def enteringPwd(self, driver):
 
         pwdFieldXPath = '//*[@id="i0118"]'
         pwdSignInButtonXPath = '//*[@id="idSIButton9"]'
@@ -69,9 +51,9 @@ class BookBot():
         pwdField.send_keys(uoPwd)
         pwdSignInButton.click()
 
-        sleep(4)
+        return driver
 
-        # Pick 2FA methods
+    def pick2FAMethod(self, driver):
 
         pick2FAMethodButtonXPath = '//*[@id="signInAnotherWay"]'
 
@@ -79,9 +61,9 @@ class BookBot():
 
         pick2FAMethodButton.click()
 
-        sleep(3)
+        return driver
 
-        # Select 2FA Methods
+    def select2FAMethod(self, driver):
 
         selectCode2FAButtonXPath = '//*[@id="idDiv_SAOTCS_Proofs"]/div[2]/div'
 
@@ -89,9 +71,9 @@ class BookBot():
 
         selectCode2FAButton.click()
 
-        sleep(3)
+        return driver
 
-        # Entering OTP code
+    def enterOTPCode(self, driver):
 
         otpFieldXPath = '//*[@id="idTxtBx_SAOTCC_OTC"]'
         verifyButtonXPath = '//*[@id="idSubmit_SAOTCC_Continue"]'
@@ -103,9 +85,9 @@ class BookBot():
 
         verifyButton.click()
 
-        sleep(3)
+        return driver
 
-        # confirming stayed login
+    def confirmStayedLogIn(self, driver):
 
         reduceLoginBoxXPath = '//*[@id="KmsiCheckboxField"]'
         noButtonXPath = '//*[@id="idBtn_Back"]'
@@ -118,17 +100,21 @@ class BookBot():
         reduceLoginBox.click()
         yesButton.click()
 
-        sleep(5)
+        return driver
 
-        # access the booking schedule page
+    def accessBookSchedule(self, driver):
+
         bookRoomButtonXPath = '//*[@id="navReservation"]/a'
 
         bookRoomButton = driver.find_element(By.XPATH, bookRoomButtonXPath)
 
         bookRoomButton.click()
 
-        # Take screenshot of the page
-        for i in range(1, 8):
+        return driver
+
+    def takeScreenshotOfNDays(self, numberOfPages, driver):
+
+        for i in range(1, numberOfPages+1):
 
             fileName = 'SCREEN_' + str(i) + '_IMG.png'
 
@@ -138,14 +124,15 @@ class BookBot():
 
             driver = self.goToNextPage(driver)
 
-        # input is just to wait and see results
-        driver.quit()
-
     def getOTP(self):
 
         totp = pyotp.parse_uri(uoAuthSecretURI)
 
         return totp.now()
+
+    def waitForElementToAppear(self, elementXPath):
+
+        wait.until(EC.presence_of_element_located((By.XPATH, elementXPath)))
 
     def goToNextPage(self, driver):
 
@@ -248,4 +235,63 @@ class BookBot():
                 hourSlot.append( slot )
 
         return hourSlot
+
+    def login(self):
+
+        # Options
+        options = uc.ChromeOptions()
+
+        options.user_data_dir = "c:\\temp\\profile"
+
+        options.add_argument('--user-data-dir=c:\\temp\\profile2')
+        options.add_argument('--incognito')
+
+        options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+
+        # creating the driver
+        driver = uc.Chrome(options=options)
+
+        # Opening the url
+        driver.get((uoBookRoomUrl))
+
+    #   entering username
+        driver = self.enteringUsername(driver)
+
+        sleep(3)
+
+        # entering pwd
+        driver = self.enteringPwd(driver)
+
+        sleep(4)
+
+        # Pick 2FA methods
+        driver = self.pick2FAMethod(driver)
+
+        sleep(3)
+
+        # Select 2FA Methods
+
+        self.select2FAMethod(driver)
+
+        sleep(3)
+
+        # Entering OTP code
+        driver = self.enterOTPCode(driver)
+
+        sleep(3)
+
+        # confirming stayed login
+        driver = self.confirmStayedLogIn(driver)
+
+
+        sleep(5)
+
+        # access the booking schedule page
+        driver = self.accessBookSchedule(driver)
+
+        # Take screenshot of the page
+        driver = self.takeScreenshotOfNDays(8, driver)
+
+        # input is just to wait and see results
+        driver.quit()
 
