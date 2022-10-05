@@ -417,7 +417,6 @@ class TextBot():
         boundBox['x']['width'] += boundBoxPixelOffset
 
 
-
     # Cropping functions
 
     def cropCalendarImage(self, screencaptureImg):
@@ -461,7 +460,7 @@ class TextBot():
 
     def cropRoomName(self, img):
 
-        pixelOffset = 10
+        pixelOffset = 300
 
         imgHeight = img.shape[0]
         left = self.dateCoordinate[0]
@@ -469,7 +468,7 @@ class TextBot():
         width = self.dateCoordinate[2]
         height = self.dateCoordinate[3]
 
-        cropImg = img[0:imgHeight, 0:left + width]
+        cropImg = img[0:imgHeight, 0:left + width - pixelOffset]
 
         return cropImg
 
@@ -613,7 +612,7 @@ class TextBot():
         width = boundBox['x']['width']
         height = boundBox['y']['height']
 
-        cv2.rectangle(img, (left, top), (left + width, top + height), (0, 0, 255), 2)
+        cv2.rectangle(img, (left, top), (left + width, top + height), (255, 255, 255), 2)
 
     def setTextToAdd(self, availabilityIndicator):
         # Returns the text to add respective to the indicator
@@ -802,6 +801,7 @@ class TextBot():
         for i in range(0, len(texts)):
 
             if self.isWeekday(texts[i]):
+
                 id = i
                 break
 
