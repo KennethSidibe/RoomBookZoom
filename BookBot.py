@@ -132,6 +132,8 @@ class BookBot():
 
     def waitForElementToAppear(self, elementXPath):
 
+        # Increase the processing time of the alg
+
         wait.until(EC.presence_of_element_located((By.XPATH, elementXPath)))
 
     def goToNextPage(self, driver):
