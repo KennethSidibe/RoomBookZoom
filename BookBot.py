@@ -29,6 +29,10 @@ class BookBot():
              'RGN-1020J', 'RGN-1020K', 'RGN-1020L', 'RGN-1020M', 'RGN-1020N', 'RGN-1020P'
              ]
 
+    timeSlot = ['00:00', '07:00', '08:00', '09:00', '10:00', '11:00',
+                '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+                '18:00', '19:00', '20:00', '21:00', '22:00', '23:00']
+
 
     def login(self):
 
@@ -69,11 +73,33 @@ class BookBot():
         # access the booking schedule page
         driver = self.accessBookSchedule(driver)
 
+        driver = self.findCorrectRoom(driver)
+
         # Take screenshot of the page
-        driver = self.takeScreenshotOfNDays(8, driver)
+        # driver = self.takeScreenshotOfNDays(8, driver)
 
         # input is just to wait and see results
         driver.quit()
+
+    def verifyBookingTableExists(self, driver):
+
+        tableXPath = '//table[@class="reservations"]'
+
+        driver = self.waitForElementToAppear(tableXPath, driver)
+
+        return driver
+
+    def findCorrectRoom(self, driver):
+
+        driver = self.verifyBookingTableExists(driver)
+
+        roomsSlotsXPath = '//a[@class="resourceNameSelector"]'
+
+        roomsSlot = self.getElementsText(driver, roomsSlotsXPath)
+
+        print(roomsSlot)
+
+        return driver
 
     def enteringUsername(self, driver):
 
@@ -93,18 +119,15 @@ class BookBot():
 
     def enteringPwd(self, driver):
 
-        pwdFieldXPath = '//*[@id="i0118"]'
-        pwdSignInButtonXPath = '//*[@id="idSIButton9"]'
+        pwdFieldXPath = '//input[@name="passwd"]'
+        pwdSignInButtonXPath = '//input[@class="win-button button_primary button ext-button primary ext-primary"]'
 
         driver = self.waitForElementToAppear(pwdFieldXPath, driver)
-        driver = self.waitForElementToBeClickable(pwdSignInButtonXPath, driver)
-
-        sleep(1)
-
         pwdField = driver.find_element(By.XPATH, pwdFieldXPath)
-        pwdSignInButton = driver.find_element(By.XPATH, pwdSignInButtonXPath)
-
         pwdField.send_keys(uoPwd)
+
+        driver = self.waitForElementToBeClickable(pwdSignInButtonXPath, driver)
+        pwdSignInButton = driver.find_element(By.XPATH, pwdSignInButtonXPath)
         pwdSignInButton.click()
 
         return driver
@@ -318,6 +341,10 @@ class BookBot():
                 hourSlot.append( slot )
 
         return hourSlot
+
+    def clickToReserve(self, roomName, timeSlot):
+        print("hi")
+
 
 
 
