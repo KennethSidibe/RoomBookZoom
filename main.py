@@ -1,6 +1,5 @@
 
 from BookBot import *
-from LoginBot import *
 from TextBot import *
 import cv2
 import time
@@ -37,13 +36,15 @@ if __name__ == '__main__':
     start = time.time()
     # bookBot.login()
 
-    availability = textBot.analyze(filepathEmpty)
+    # bookBot.testRetrieveTable()
 
-    print(availability)
+    # availability = textBot.analyze(filepathEmpty)
 
-    elapsedTime = time.time() - start
+    # print(availability)
 
-    print('elapsed time : ', elapsedTime)
+    # elapsedTime = time.time() - start
+
+    # print('elapsed time : ', elapsedTime)
 
 
 
