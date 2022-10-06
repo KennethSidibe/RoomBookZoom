@@ -30,21 +30,24 @@ if __name__ == '__main__':
     testProcessFilePath = 'screencapture/testProcess.png'
     screenFilePath = 'screencapture/SCREEN_1_IMG.png'
 
-    bot = LoginBot()
-
     bookBot = BookBot()
 
     textBot = TextBot()
 
-    bookBot.login()
+    start = time.time()
+    # bookBot.login()
 
-    analyzeNImages(8, textBot)
+    availability = textBot.analyze(filepathEmpty)
 
-    # elapsedTime = time.time() - start
+    print(availability)
 
-    # print(availability)
+    elapsedTime = time.time() - start
 
-    # print('elapsed time : ', elapsedTime)
+    print('elapsed time : ', elapsedTime)
+
+
+
+
 
 
 
